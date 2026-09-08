@@ -9,6 +9,8 @@
   
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- High-precision library for lunar ephemeris & topocentric positions -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
   
   <style>
     :root {
@@ -22,6 +24,13 @@
       --text-muted: rgba(255, 255, 255, 0.52);
       --card-radius: 20px;
       --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --moon-glow: rgba(254, 240, 138, 0.3);
+      --accent: #38bdf8;
+      --accent-red: #f43f5e;
+      --accent-orange: #fb923c;
+      --accent-yellow: #facc15;
+      --accent-green: #34d399;
+      --accent-blue: #38bdf8;
     }
 
     * {
@@ -81,7 +90,7 @@
     .ios-shell.sliding-in-left { opacity: 0; transform: translateX(35px); }
     .ios-shell.sliding-in-right { opacity: 0; transform: translateX(-35px); }
 
-    /* Header & Weather Animation */
+    /* Header */
     .ios-header {
       text-align: center;
       padding: 4px 0 12px 0;
@@ -209,7 +218,7 @@
       letter-spacing: 0.07em;
       text-transform: uppercase;
       color: var(--text-muted);
-      margin: 8px 0 2px 4px;
+      margin: 14px 0 2px 4px;
     }
 
     /* Climate Metric Bars Stack */
@@ -268,6 +277,70 @@
       width: 0%;
       border-radius: 99px;
       transition: width 0.6s ease;
+    }
+
+    /* Enhanced Snippet Metric Rows (from gemini-code-1788859328459.css) */
+    .metric-row {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .metric-row:hover {
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .metric-tag {
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.48);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metric-val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+    }
+
+    .metric-sub {
+      font-size: 0.8rem;
+      line-height: 1.35;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
     }
 
     /* Segmented Tab Controls */
@@ -332,29 +405,6 @@
     }
     #satelliteMap { width: 100%; height: 100%; }
 
-    /* Moon Phase Widget */
-    .moon-widget-body {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      margin-top: 6px;
-    }
-    .moon-stats-col { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-    .moon-stat-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-size: 0.88rem;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .moon-stat-row:last-child { border-bottom: none; padding-bottom: 0; }
-    .moon-stat-label { color: var(--text-primary); font-weight: 400; }
-    .moon-stat-val { font-weight: 500; color: var(--text-secondary); text-align: right; }
-    .moon-graphic-wrap { width: 80px; height: 80px; position: relative; flex-shrink: 0; }
-    .moon-svg { width: 100%; height: 100%; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15)); }
-
     /* Pressure Speedometer */
     .pressure-gauge-box {
       width: 100%;
@@ -394,11 +444,130 @@
     .compass-dial { width: 100%; height: 100%; }
     .compass-needle { transform-origin: 55px 55px; transition: transform 0.6s ease-out; }
 
-    /* Solar Arc */
-    .solar-arc-box { margin: 8px 0 6px 0; position: relative; }
-    .solar-arc-svg { width: 100%; height: 48px; overflow: visible; }
+    /* Sun Transit Widget */
+    .sun-status-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+    .sun-arc-container {
+      position: relative;
+      width: 100%;
+      height: 125px;
+      margin-top: 6px;
+    }
+    .sun-arc-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    .celestial-orb {
+      transition: cx 0.8s cubic-bezier(0.2, 0.9, 0.3, 1), 
+                  cy 0.8s cubic-bezier(0.2, 0.9, 0.3, 1), 
+                  fill 0.4s ease;
+    }
+    .sun-time-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      padding: 0 4px;
+    }
+    .sun-time-block {
+      display: flex;
+      flex-direction: column;
+    }
+    .sun-time-block.right {
+      text-align: right;
+    }
+    .sun-time-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+    .sun-time-val {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 2px;
+      color: #ffffff;
+    }
 
-    /* Floating Dock */
+    /* Advanced Moon Phase Widget */
+    .moon-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 12px 0 16px 0;
+    }
+    .canvas-wrapper {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      margin-bottom: 12px;
+      border-radius: 50%;
+      box-shadow: 0 0 25px var(--moon-glow);
+    }
+    #moon-canvas {
+      display: block;
+      border-radius: 50%;
+    }
+    .moon-phase-name {
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+    .meta-badges {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .badge {
+      font-size: 0.76rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+      border: 1px solid var(--card-border);
+    }
+    .badge-ill {
+      color: #fef08a;
+      background: rgba(254, 240, 138, 0.12);
+    }
+    .badge-sky {
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+    }
+    .moon-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .moon-detail-card {
+      background: rgba(10, 16, 30, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+    .moon-detail-card .label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .moon-detail-card .value {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .moon-detail-card .subtext {
+      font-size: 0.72rem;
+      color: var(--accent);
+      margin-top: 3px;
+    }
+
+    /* Floating Dock (Navigation) */
     .ios-dock {
       position: fixed;
       bottom: 16px;
@@ -406,7 +575,7 @@
       transform: translateX(-50%);
       width: calc(100% - 32px);
       max-width: 480px;
-      background: rgba(26, 38, 54, 0.75);
+      background: rgba(26, 38, 54, 0.78);
       backdrop-filter: blur(30px) saturate(180%);
       -webkit-backdrop-filter: blur(30px) saturate(180%);
       border: 1px solid rgba(255, 255, 255, 0.16);
@@ -429,8 +598,27 @@
       width: 32px;
       height: 32px;
     }
-    .dock-pagination { display: flex; align-items: center; gap: 7px; user-select: none; }
-    .dock-bullet-item { cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px 2px; }
+
+    .dock-pagination {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+      max-width: 250px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      scroll-behavior: smooth;
+      padding: 4px 6px;
+    }
+    .dock-pagination::-webkit-scrollbar { display: none; }
+
+    .dock-bullet-item {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 2px;
+    }
     .dock-dot {
       width: 6.5px;
       height: 6.5px;
@@ -438,8 +626,8 @@
       background: rgba(255, 255, 255, 0.35);
       transition: all 0.25s ease;
     }
-    .dock-bullet-item.active .dock-dot { background: #ffffff; transform: scale(1.25); }
-    .dock-location-arrow { width: 12px; height: 12px; fill: rgba(255, 255, 255, 0.45); }
+    .dock-bullet-item.active .dock-dot { background: #ffffff; transform: scale(1.35); }
+    .dock-location-arrow { width: 11px; height: 11px; fill: rgba(255, 255, 255, 0.45); }
     .dock-bullet-item.active .dock-location-arrow { fill: #ffffff; }
 
     /* Modal Sheet */
@@ -487,6 +675,8 @@
       border-radius: 99px;
       cursor: pointer;
     }
+
+    /* Modal Search Box (from gemini-code-1788859318918.css) */
     .search-box-wrapper { position: relative; margin-bottom: 14px; }
     .search-input {
       width: 100%;
@@ -498,6 +688,11 @@
       color: #ffffff;
       outline: none;
       font-family: var(--font-stack);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .search-input:focus {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: var(--accent-blue);
     }
     .search-input::placeholder { color: rgba(255, 255, 255, 0.45); }
     .search-icon-inside {
@@ -576,16 +771,27 @@
       <span id="rainAlertMessage">Precipitation Alert</span>
     </div>
 
+    <!-- Weather Summary Card -->
     <div class="weather-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-10 10c0 4.9 3.5 8.9 8.2 9.8l.8.2v-6.2H9v-2h2V12a3 3 0 0 1 3-3h2v2h-2a1 1 0 0 0-1 1v1.8h3v2h-3V22c5.5-.5 9.8-5.1 9.8-10.7A10 10 0 0 0 12 2z"/></svg>
-        <span>PRECIPITATION SUMMARY</span>
+        <span>WEATHER SUMMARY</span>
       </div>
+      
+      <div style="color: #38bdf8; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; margin: 8px 0 4px 0;">NEXT HOUR OUTLOOK</div>
       <div class="card-subtext" id="narrative-text" style="font-size: 0.95rem; font-weight: 500;">
-        Connecting live atmospheric telemetry...
+        Connecting live atmospheric sensors...
+      </div>
+      
+      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0;">
+      
+      <div style="color: #38bdf8; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 4px 0;">24-HOUR OUTLOOK</div>
+      <div class="card-subtext" id="narrative-daily-text" style="font-size: 0.95rem; font-weight: 500;">
+        Generating diurnal meteorological model...
       </div>
     </div>
 
+    <!-- Climate Card -->
     <div class="weather-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 0-4 4v7.3a6 6 0 1 0 8 0V6a4 4 0 0 0-4-4zm0 18a4 4 0 0 1-2.4-7.2l.4-.3V6a2 2 0 1 1 4 0v6.5l.4.3A4 4 0 0 1 12 20z"/></svg>
@@ -608,19 +814,6 @@
       </div>
 
       <div class="climate-bars-stack">
-        <div class="climate-metric-item">
-          <div class="climate-metric-header">
-            <div class="climate-metric-left">
-              <span class="climate-dot" id="dot-aqi" style="background: #34d399;"></span>
-              <span id="label-aqi">Air Quality: Good</span>
-            </div>
-            <div class="climate-metric-right" id="metric-aqi">AQI 29 · PM2.5 3.2 µg/m³</div>
-          </div>
-          <div class="ios-progress-track">
-            <div class="ios-progress-fill" id="bar-aqi" style="background: #34d399; width: 18%;"></div>
-          </div>
-        </div>
-
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -679,6 +872,34 @@
       </div>
     </div>
 
+    <!-- Environmental Air Quality Widget -->
+    <div class="section-label">Environmental Air Quality</div>
+    <div class="weather-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3 0 .24.04.47.12.68L10 11.23V11c0-1.66-1.34-3-3-3s-3 1.34-3 3 1.34 3 3 3c.24 0 .47-.04.68-.12l3.12 2.55V17c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3c-.24 0-.47.04-.68.12l-3.12-2.55v-.57l3.12-2.55c.21.08.44.12.68.12zm-9-1c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm9-3c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm0 9c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z"/></svg>
+        <span>LIVE IQAIR SENSOR</span>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin: 4px 0 6px 0;">
+        <div>
+          <div style="font-size: 3.2rem; font-weight: 400; line-height: 1; letter-spacing: -0.03em; transition: color 0.3s;" id="iqair-aqi">--</div>
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-top: 4px;" id="iqair-label">US AQI</div>
+        </div>
+        <div style="text-align: right; overflow: hidden;">
+          <div style="font-size: 1.2rem; font-weight: 500; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px;" id="iqair-city">Connecting...</div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);" id="iqair-country">--</div>
+        </div>
+      </div>
+
+      <div class="ios-progress-track" style="margin-top: 10px;">
+        <div class="ios-progress-fill" id="iqair-bar" style="background: #34d399; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;"></div>
+      </div>
+      <div class="card-subtext card-subtext-muted" id="iqair-pm25" style="margin-top: 8px;">
+        Primary Pollutant PM2.5: --
+      </div>
+    </div>
+
+    <!-- 24-Hour Hourly Projection -->
     <div class="weather-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M3.5 18.5 9.5 12.5l4 4 6.5-6.5V14h2V6h-8v2h4.1l-4.6 4.6-4-4L2 17.1l1.5 1.4z"/></svg>
@@ -686,18 +907,19 @@
       </div>
 
       <div class="segmented-control">
-        <button class="seg-btn active" onclick="switchHourlyView('rain')">Rain</button>
-        <button class="seg-btn" onclick="switchHourlyView('solar')">⚡ Solar</button>
-        <button class="seg-btn" onclick="switchHourlyView('temp')">Temp</button>
+        <button class="seg-btn active" onclick="switchHourlyView('temp')">Temp</button>
+        <button class="seg-btn" onclick="switchHourlyView('humidity')">Humidity</button>
+        <button class="seg-btn" onclick="switchHourlyView('uv')">UV</button>
         <button class="seg-btn" onclick="switchHourlyView('pm25')">PM 2.5</button>
         <button class="seg-btn" onclick="switchHourlyView('wind')">Wind</button>
-        <button class="seg-btn" onclick="switchHourlyView('uv')">UV</button>
-        <button class="seg-btn" onclick="switchHourlyView('pressure')">Pressure</button>
+        <button class="seg-btn" onclick="switchHourlyView('rain')">Rain</button>
+        <button class="seg-btn" onclick="switchHourlyView('solar')">⚡ Solar</button>
       </div>
 
       <canvas id="hourlyForecastChart" class="chart-canvas"></canvas>
     </div>
 
+    <!-- 7-Day Forecast Projection -->
     <div class="weather-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
@@ -705,16 +927,63 @@
       </div>
 
       <div class="segmented-control">
-        <button class="seg-btn active" onclick="switchDailyView('temp')">Temp Range</button>
-        <button class="seg-btn" onclick="switchDailyView('rain')">Rain Sum</button>
-        <button class="seg-btn" onclick="switchDailyView('solar')">⚡ Daily Solar</button>
+        <button class="seg-btn active" onclick="switchDailyView('temp')">Temp</button>
+        <button class="seg-btn" onclick="switchDailyView('humidity')">Humidity</button>
+        <button class="seg-btn" onclick="switchDailyView('uv')">UV</button>
         <button class="seg-btn" onclick="switchDailyView('pm25')">PM 2.5</button>
-        <button class="seg-btn" onclick="switchDailyView('wind')">Max Wind</button>
-        <button class="seg-btn" onclick="switchDailyView('uv')">Peak UV</button>
+        <button class="seg-btn" onclick="switchDailyView('wind')">Wind</button>
+        <button class="seg-btn" onclick="switchDailyView('rain')">Rain</button>
+        <button class="seg-btn" onclick="switchDailyView('solar')">⚡ Solar</button>
       </div>
 
       <canvas id="dailyForecastChart" class="chart-canvas"></canvas>
     </div>
+
+    <!-- Earthquake Widget -->
+    <div class="section-label">Seismic Activity</div>
+    <div class="weather-card" id="earthquake-card">
+      <div class="card-title" style="justify-content: space-between; width: 100%; margin-bottom: 0;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span>🌍</span>
+          <span>EARTHQUAKES TODAY</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.2); padding: 3px 8px; border-radius: 6px;">
+          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">MAG ></span>
+          <select id="mag-filter" style="background: transparent; color: white; border: none; font-size: 0.75rem; font-weight: 700; outline: none; cursor: pointer; padding-left: 2px;">
+            <option value="1" style="color: black;">1</option>
+            <option value="2" style="color: black;">2</option>
+            <option value="3" style="color: black;">3</option>
+            <option value="4" style="color: black;">4</option>
+            <option value="5" style="color: black;">5</option>
+            <option value="6" style="color: black;" selected>6</option>
+            <option value="7" style="color: black;">7</option>
+            <option value="8" style="color: black;">8</option>
+            <option value="9" style="color: black;">9</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="earthquake-widget-body" style="margin-top: 12px;">
+        <div id="eq-loading" style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 10px 0;">
+           Fetching latest seismic data...
+        </div>
+        <div id="eq-error" style="display: none; text-align: center; color: #f87171; font-size: 0.85rem; padding: 10px 0;">
+           Failed to load earthquake data.
+        </div>
+        <div id="eq-no-data" style="display: none; text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 10px 0;">
+           No earthquakes greater than this magnitude recorded today. 🎉
+        </div>
+        <ul id="earthquake-list" style="display: none; list-style: none; max-height: 250px; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 10px;">
+        </ul>
+      </div>
+      <div style="font-size: 0.7rem; color: var(--text-muted); display: flex; justify-content: space-between; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+        <span>Source: USGS API</span>
+        <span id="eq-update-time"></span>
+      </div>
+    </div>
+
+    <!-- Mapping Section -->
+    <div class="section-label">Atmospheric Telemetry & Celestial</div>
 
     <div class="weather-card satellite-card">
       <div class="satellite-header">
@@ -728,6 +997,22 @@
       </div>
       <div class="satellite-map-wrapper">
         <div id="satelliteMap"></div>
+      </div>
+    </div>
+
+    <!-- Windy Map Iframe Integration -->
+    <div class="weather-card satellite-card">
+      <div class="satellite-header">
+        <div class="card-title" style="margin-bottom: 0;">
+          <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
+          <span>WINDY GLOBAL RADAR</span>
+        </div>
+        <a id="windyExternalLink" href="https://www.windy.com/?13.3671,103.8448,5" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">
+          Open in Windy ↗
+        </a>
+      </div>
+      <div class="satellite-map-wrapper" style="height: 380px;">
+        <iframe id="windyIframe" width="100%" height="100%" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=5&overlay=wind&product=ecmwf&level=surface&lat=13.3671&lon=103.8448&detailLat=13.3671&detailLon=103.8448&pressure=true&message=true" frameborder="0"></iframe>
       </div>
     </div>
 
@@ -754,41 +1039,6 @@
         </div>
         <div class="card-large-val" id="val-rain">-- mm/h</div>
         <div class="card-subtext card-subtext-muted" id="rain-rate-sub">Real-time precipitation rate.</div>
-      </div>
-    </div>
-
-    <div class="section-label">Atmospheric Telemetry & Celestial</div>
-
-    <div class="weather-card">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/></svg>
-        <span id="moon-phase-title">WANING CRESCENT</span>
-      </div>
-      <div class="moon-widget-body">
-        <div class="moon-stats-col">
-          <div class="moon-stat-row">
-            <span class="moon-stat-label">Illumination</span>
-            <span class="moon-stat-val" id="moon-illumination">18%</span>
-          </div>
-          <div class="moon-stat-row">
-            <span class="moon-stat-label">Next Moonrise</span>
-            <span class="moon-stat-val" id="moon-rise-time">2:52 in the morning</span>
-          </div>
-          <div class="moon-stat-row">
-            <span class="moon-stat-label">Next Full Moon</span>
-            <span class="moon-stat-val" id="moon-next-full">20 DAYS</span>
-          </div>
-        </div>
-
-        <div class="moon-graphic-wrap">
-          <svg class="moon-svg" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="44" fill="#334155" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-            <circle cx="40" cy="38" r="8" fill="#1e293b" opacity="0.35"/>
-            <circle cx="56" cy="62" r="10" fill="#1e293b" opacity="0.3"/>
-            <circle cx="34" cy="66" r="6" fill="#1e293b" opacity="0.25"/>
-            <path id="moonCrescentPath" d="M 50 6 A 44 44 0 0 0 50 94 A 32 44 0 0 1 50 6" fill="#e2e8f0" opacity="0.95" filter="drop-shadow(0 0 4px rgba(255,255,255,0.6))"/>
-          </svg>
-        </div>
       </div>
     </div>
 
@@ -889,20 +1139,227 @@
       </div>
     </div>
 
+    <!-- Sun & Moon Transit Ephemeris Widget -->
     <div class="weather-card">
       <div class="card-title">
-        <svg viewBox="0 0 24 24"><path d="M12 18a6 6 0 0 1-6-6h12a6 6 0 0 1-6 6zm-7-4H2v-2h3v2zm17 0h-3v-2h3v2zm-4.9-7.1 1.4-1.4 1.4 1.4-1.4 1.4-1.4-1.4zM5.5 8.3 4.1 6.9l1.4-1.4 1.4 1.4-1.4 1.4zM11 1h2v3h-2V1z"/></svg>
-        <span id="sun-title">SUNSET</span>
+        <svg viewBox="0 0 24 24"><path d="M12 18a6 6 0 0 1-6-6h12a6 6 0 0 1-6 6zm-7-4H2v-2h3v2zm17 0h-3v-2h3v2zm-4.9-7.1 1.4-1.4 1.4 1.4-1.4 1.4-1.4-1.4zM5.5 8.3 4.1 6.9l1.4-1.4 1.4 1.4 1.4 1.4zM11 1h2v3h-2V1z"/></svg>
+        <span id="sunTransitHeaderTitle">SOLAR TRANSIT</span>
       </div>
-      <div class="card-large-val" id="sunset-time-main" style="font-size: 1.55rem; font-weight: 500;">--:--</div>
-      <div class="solar-arc-box">
-        <svg class="solar-arc-svg" viewBox="0 0 150 45">
-          <line x1="0" y1="32" x2="150" y2="32" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" />
-          <path d="M 5 32 Q 75 0 145 32" fill="none" stroke="rgba(255,255,255,0.38)" stroke-width="2" stroke-linecap="round" />
-          <circle id="sun-arc-dot" cx="75" cy="16" r="4.5" fill="#ffffff" filter="drop-shadow(0 0 4px rgba(255,255,255,0.8))" />
+
+      <div class="sun-status-desc" id="statusDesc">Tracking Solar Transit...</div>
+
+      <div class="sun-arc-container">
+        <svg class="sun-arc-svg" viewBox="0 0 320 160">
+          <defs>
+            <linearGradient id="arcStrokeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
+              <stop offset="50%" stop-color="#fbbf24" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.3"/>
+            </linearGradient>
+            <filter id="sunOrbGlow">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          <line x1="20" y1="135" x2="300" y2="135" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="3,3" />
+          <path d="M 25 135 Q 160 20 295 135" fill="none" stroke="url(#arcStrokeGrad)" stroke-width="2.5" stroke-linecap="round" />
+          <circle id="celestialOrb" class="celestial-orb" cx="25" cy="135" r="9" fill="#facc15" filter="url(#sunOrbGlow)" />
         </svg>
       </div>
-      <div class="card-subtext card-subtext-muted" id="sun-times">Sunrise: --:--</div>
+
+      <div class="sun-time-labels">
+        <div class="sun-time-block">
+          <span class="sun-time-tag" id="startTag">Sunrise</span>
+          <span class="sun-time-val" id="startTimeVal">--:--</span>
+        </div>
+        <div class="sun-time-block right">
+          <span class="sun-time-tag" id="endTag">Sunset</span>
+          <span class="sun-time-val" id="endTimeVal">--:--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Integrated Moon Phase Widget placed below Solar Transit -->
+    <div class="weather-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/></svg>
+        <span>LUNAR PHASE & EPHEMERIS</span>
+      </div>
+
+      <div class="moon-visual">
+        <div class="canvas-wrapper">
+          <canvas id="moon-canvas" width="170" height="170"></canvas>
+        </div>
+        <div class="moon-phase-name" id="phase-name">Calculating...</div>
+        <div class="meta-badges">
+          <div class="badge badge-ill" id="illumination-val">--% Illuminated</div>
+          <div class="badge badge-sky" id="sky-status">--</div>
+        </div>
+      </div>
+
+      <div class="moon-details-grid">
+        <div class="moon-detail-card">
+          <div class="label">Moonrise Today</div>
+          <div class="value" id="moonrise-time">--:--</div>
+          <div class="subtext" id="moonrise-sub">Horizon</div>
+        </div>
+
+        <div class="moon-detail-card">
+          <div class="label">Moonset Today</div>
+          <div class="value" id="moonset-time">--:--</div>
+          <div class="subtext" id="moonset-sub">Horizon</div>
+        </div>
+
+        <div class="moon-detail-card">
+          <div class="label">Next Full Moon</div>
+          <div class="value" id="next-full-date">--</div>
+          <div class="subtext" id="full-days-away">--</div>
+        </div>
+
+        <div class="moon-detail-card">
+          <div class="label">Next New Moon</div>
+          <div class="value" id="next-new-date">--</div>
+          <div class="subtext" id="new-days-away">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIOCLIMATIC & VECTOR RISK -->
+    <div class="section-label">Bioclimatic & Vector Risk</div>
+    <div class="weather-card" style="gap: 12px;">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        <span>BIOCLIMATIC INDICES</span>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🦟 Mosquito Breeding Risk</span>
+          <span class="metric-val" id="mosquitoVal">--</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="mosquitoBar" style="width: 0%; background: #facc15;"></div>
+        </div>
+        <div class="metric-sub" id="mosquitoSub">Evaluating vector conditions...</div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌡️ Humidex / Discomfort</span>
+          <span class="metric-val" id="humidexVal">--</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="humidexBar" style="width: 0%; background: #38bdf8;"></div>
+        </div>
+        <div class="metric-sub" id="humidexSub">Deriving vapor pressure load...</div>
+      </div>
+    </div>
+
+    <!-- GEOLOGICAL & MARINE HAZARDS (Enhanced with full suite from gemini-code-1788859140837.html) -->
+    <div class="section-label">Geological, Marine & Atmospheric Hazards</div>
+    <div class="weather-card" style="gap: 12px;">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
+        <span>EARLY WARNING TELEMETRY</span>
+      </div>
+
+      <!-- 1. Fires in Area & Wildfire Danger -->
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🔥 Fires in Area & Thermal Hotspots</span>
+          <span class="metric-val" id="fireVal">Analyzing...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="fireBar" style="width: 10%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="fireSub">
+          Scanning NASA FIRMS thermal anomaly buffers, vegetation flammability, and particulate smoke indicators...
+        </div>
+      </div>
+
+      <!-- 2. Volcanic Plume Warning -->
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌋 Volcanic Plume Warning</span>
+          <span class="metric-val" id="volcanoVal">Calculating...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="volcanoBar" style="width: 15%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="volcanoSub">
+          Scanning nearest magmatic vents and aviation color alerts...
+        </div>
+      </div>
+
+      <!-- 3. Tectonic Activity -->
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">⚡ Tectonic Activity</span>
+          <span class="metric-val" id="quakeVal">Querying USGS...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="quakeBar" style="width: 10%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="quakeSub">Connecting live seismic sensors...</div>
+      </div>
+
+      <!-- 4. Tsunami Alerts -->
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌊 Tsunami Alerts</span>
+          <span class="metric-val" id="tsunamiVal">Evaluating...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="tsunamiBar" style="width: 10%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="tsunamiSub">Evaluating oceanic hypocenters...</div>
+      </div>
+
+      <!-- 5. Flash Flooding & Basin Runoff -->
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌊 Flash & River Flood Risk</span>
+          <span class="metric-val" id="floodVal">Calculating...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="floodBar" style="width: 15%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="floodSub">
+          Evaluating catchment runoff, local precipitation rates, and floodplain saturation...
+        </div>
+      </div>
+
+      <!-- 6. Tropical Systems / Squall Shears -->
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌀 Tropical Systems / Typhoons</span>
+          <span class="metric-val" id="stormVal">Calculating...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="stormBar" style="width: 20%; background: var(--accent-blue);"></div>
+        </div>
+        <div class="metric-sub" id="stormSub">
+          Scanning barometric depression, wind shear velocities, and convective squall bands...
+        </div>
+      </div>
+
+      <!-- 7. Convective Lightning Strikes -->
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">⚡ Lightning Activity</span>
+          <span class="metric-val" id="lightningVal">0 / hr</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="lightningBar" style="width: 5%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="lightningSub">
+          Scanning convective cells and atmospheric instability (CAPE)...
+        </div>
+      </div>
     </div>
   </main>
 
@@ -922,6 +1379,7 @@
     </div>
   </nav>
 
+  <!-- City Search Modal Sheet -->
   <div class="modal-backdrop" id="modalBackdrop" onclick="handleBackdropClick(event)">
     <div class="city-modal" id="cityModal">
       <div class="modal-drag-bar"></div>
@@ -949,6 +1407,7 @@
 
   <script>
     const API_KEY = "jO1pS3yOqaEaPL7KBOFghwmff66C6ehe";
+    const iqAirKey = '57810971-c634-4d89-a7cb-4cf2ae9d2b2b';
 
     let cities = [
       { name: "Siem Reap", country: "Cambodia", lat: 13.3671, lon: 103.8448, timezone: "Asia/Bangkok", isCurrent: true, baselineAvg: 32 },
@@ -961,10 +1420,681 @@
     let dailyChartInstance = null;
     let cachedHourly = [];
     let cachedDaily = [];
-    let currentHourlyView = 'rain';
+    let currentHourlyView = 'temp';
     let currentDailyView = 'temp';
     let currentCloudCover = 30;
     let leafletMap = null;
+    let allEarthquakes = [];
+
+    // Ephemeris transit tracking variables
+    let transitSunriseDate = null;
+    let transitSunsetDate = null;
+    let transitNextSunriseDate = null;
+
+    // --- Distance calculation utility ---
+    function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return Math.round(R * c);
+    }
+
+    // --- Bioclimatic Snippet Implementation ---
+    function calculateHumidex(tempC, humidityPct) {
+      const e = (6.112 * Math.pow(10, (7.5 * tempC / (237.7 + tempC)))) * (humidityPct / 100);
+      return Math.round(tempC + (5 / 9) * (e - 10));
+    }
+
+    function processBioclimaticMetrics(temp, humidity) {
+      const mosquitoVal = document.getElementById("mosquitoVal");
+      const mosquitoBar = document.getElementById("mosquitoBar");
+      const mosquitoSub = document.getElementById("mosquitoSub");
+
+      if (temp >= 24 && temp <= 33 && humidity >= 65) {
+        mosquitoVal.textContent = "High Breeding Risk";
+        mosquitoVal.style.color = "#f43f5e";
+        mosquitoBar.style.width = "85%";
+        mosquitoBar.style.background = "#f43f5e";
+        mosquitoSub.textContent = `Optimal vector proliferation (${temp}°C, ${humidity}% RH). Standing water accelerates reproduction.`;
+      } else if (temp >= 20 && humidity >= 50) {
+        mosquitoVal.textContent = "Moderate Risk";
+        mosquitoVal.style.color = "#facc15";
+        mosquitoBar.style.width = "50%";
+        mosquitoBar.style.background = "#facc15";
+        mosquitoSub.textContent = `Conditions viable for vector activity (${temp}°C, ${humidity}% RH). Peak biting around dawn/dusk.`;
+      } else {
+        mosquitoVal.textContent = "Low / Suppressed";
+        mosquitoVal.style.color = "#34d399";
+        mosquitoBar.style.width = "18%";
+        mosquitoBar.style.background = "#34d399";
+        mosquitoSub.textContent = `Sub-optimal reproductive conditions (${temp}°C, ${humidity}% RH). Larval development constrained.`;
+      }
+
+      const humidex = calculateHumidex(temp, humidity);
+      const humidexVal = document.getElementById("humidexVal");
+      const humidexBar = document.getElementById("humidexBar");
+      const humidexSub = document.getElementById("humidexSub");
+
+      if (humidex >= 45) {
+        humidexVal.textContent = `${humidex} · Dangerous`;
+        humidexVal.style.color = "#f43f5e";
+        humidexBar.style.width = "95%";
+        humidexBar.style.background = "#f43f5e";
+        humidexSub.textContent = "Extreme physiological heat load. Evaporative cooling failing. Heat stroke hazard during exertion.";
+      } else if (humidex >= 40) {
+        humidexVal.textContent = `${humidex} · Great Discomfort`;
+        humidexVal.style.color = "#fb923c";
+        humidexBar.style.width = "75%";
+        humidexBar.style.background = "#fb923c";
+        humidexSub.textContent = "Pronounced thermal fatigue and discomfort. Avoid sustained physical labor outdoors.";
+      } else if (humidex >= 30) {
+        humidexVal.textContent = `${humidex} · Moderate Discomfort`;
+        humidexVal.style.color = "#facc15";
+        humidexBar.style.width = "45%";
+        humidexBar.style.background = "#facc15";
+        humidexSub.textContent = "Noticeable heat index and vapor load. Stay hydrated during prolonged sunlight exposure.";
+      } else {
+        humidexVal.textContent = `${humidex} · Comfortable`;
+        humidexVal.style.color = "#34d399";
+        humidexBar.style.width = "20%";
+        humidexBar.style.background = "#34d399";
+        humidexSub.textContent = "Thermal equilibrium within comfortable human metabolic baseline range.";
+      }
+    }
+
+    // --- Volcano Hazard Snippet Implementation ---
+    const ACTIVE_VOLCANO_CATALOG = [
+      { name: "Phnom Kulen Basalts", lat: 13.6, lon: 104.1, color: "GREEN" },
+      { name: "Toroeng Prong", lat: 12.8, lon: 107.2, color: "GREEN" },
+      { name: "Krakatau", lat: -6.102, lon: 105.423, color: "ORANGE" },
+      { name: "Merapi", lat: -7.54, lon: 110.446, color: "ORANGE" },
+      { name: "Taal", lat: 14.002, lon: 120.993, color: "YELLOW" },
+      { name: "Sakurajima", lat: 31.585, lon: 130.657, color: "ORANGE" },
+      { name: "Mount Fuji", lat: 35.3606, lon: 138.7274, color: "GREEN" },
+      { name: "Mount Etna", lat: 37.751, lon: 14.993, color: "YELLOW" },
+      { name: "Popocatépetl", lat: 19.023, lon: -98.622, color: "YELLOW" }
+    ];
+
+    function checkVolcanoHazards(lat, lon) {
+      let nearest = null;
+      let minDis = Infinity;
+
+      ACTIVE_VOLCANO_CATALOG.forEach(v => {
+        const d = calculateDistanceKm(lat, lon, v.lat, v.lon);
+        if (d < minDis) { minDis = d; nearest = { ...v, distance: d }; }
+      });
+
+      const valEl = document.getElementById("volcanoVal");
+      const barEl = document.getElementById("volcanoBar");
+      const subEl = document.getElementById("volcanoSub");
+
+      if (nearest) {
+        if (nearest.distance < 150 && (nearest.color === "RED" || nearest.color === "ORANGE")) {
+          valEl.textContent = `Warning: ${nearest.name} (${nearest.distance} km)`;
+          valEl.style.color = "var(--accent-red)";
+          barEl.style.width = "90%";
+          barEl.style.background = "var(--accent-red)";
+          subEl.textContent = `Active eruptive venting reported. VONA: ${nearest.color}. Airborne ash risk within 150 km.`;
+        } else if (nearest.distance < 400 && nearest.color !== "GREEN") {
+          valEl.textContent = `Watch: ${nearest.name} (${nearest.distance} km)`;
+          valEl.style.color = "var(--accent-orange)";
+          barEl.style.width = "50%";
+          barEl.style.background = "var(--accent-orange)";
+          subEl.textContent = `Magmatic unrest documented (VONA: ${nearest.color}). No immediate heavy fallout.`;
+        } else {
+          valEl.textContent = `Quiet (${nearest.name}, ${nearest.distance.toLocaleString()} km)`;
+          valEl.style.color = "var(--accent-green)";
+          barEl.style.width = "15%";
+          barEl.style.background = "var(--accent-green)";
+          subEl.textContent = `Nearest active vent is quiescent (VONA: ${nearest.color}). No ash plume hazard.`;
+        }
+      }
+    }
+
+    // --- Seismic & Tsunami Hazard Snippet Implementation ---
+    async function checkSeismicAndTsunami(lat, lon) {
+      const quakeVal = document.getElementById("quakeVal");
+      const quakeBar = document.getElementById("quakeBar");
+      const quakeSub = document.getElementById("quakeSub");
+
+      const tsunamiVal = document.getElementById("tsunamiVal");
+      const tsunamiBar = document.getElementById("tsunamiBar");
+      const tsunamiSub = document.getElementById("tsunamiSub");
+
+      try {
+        const res = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson");
+        const data = await res.json();
+
+        if (data && data.features && data.features.length > 0) {
+          let nearest = null;
+          let minDistance = Infinity;
+
+          data.features.forEach(f => {
+            const qLon = f.geometry.coordinates[0];
+            const qLat = f.geometry.coordinates[1];
+            const dist = calculateDistanceKm(lat, lon, qLat, qLon);
+            if (dist < minDistance) {
+              minDistance = dist;
+              nearest = { ...f, distance: dist };
+            }
+          });
+
+          if (nearest) {
+            const props = nearest.properties;
+            const mag = props.mag ? props.mag.toFixed(1) : "N/A";
+            const depthKm = nearest.geometry.coordinates[2] || 10;
+            const tsunamiFlag = props.tsunami === 1;
+
+            if (nearest.distance < 400 && props.mag >= 6.0) {
+              quakeVal.textContent = `Severe M${mag} (${nearest.distance} km)`;
+              quakeVal.style.color = "var(--accent-red)";
+              quakeBar.style.width = "90%";
+              quakeBar.style.background = "var(--accent-red)";
+              quakeSub.textContent = `Significant rupture: ${props.place}. Depth: ${depthKm} km.`;
+            } else if (nearest.distance < 800 && props.mag >= 5.2) {
+              quakeVal.textContent = `Moderate M${mag} (${nearest.distance} km)`;
+              quakeVal.style.color = "var(--accent-orange)";
+              quakeBar.style.width = "55%";
+              quakeBar.style.background = "var(--accent-orange)";
+              quakeSub.textContent = `Regional tremor registered: ${props.place}. Depth: ${depthKm} km.`;
+            } else {
+              quakeVal.textContent = `M${mag} – ${props.place.split(',').pop().trim()} (${nearest.distance.toLocaleString()} km)`;
+              quakeVal.style.color = "var(--accent-green)";
+              quakeBar.style.width = "18%";
+              quakeBar.style.background = "var(--accent-green)";
+              quakeSub.textContent = `Nearest event: ${props.place}. Stable cratonic baseline.`;
+            }
+
+            const isOffshore = depthKm < 65 && nearest.distance < 1200;
+            if (tsunamiFlag || (props.mag >= 7.0 && isOffshore)) {
+              tsunamiVal.textContent = "ACTIVE TSUNAMI WARNING";
+              tsunamiVal.style.color = "var(--accent-red)";
+              tsunamiBar.style.width = "95%";
+              tsunamiBar.style.background = "var(--accent-red)";
+              tsunamiSub.textContent = `Tsunami wave generation possible from M${mag} rupture (${nearest.distance} km away).`;
+            } else if (props.mag >= 6.2 && isOffshore) {
+              tsunamiVal.textContent = "Informational Tsunami Advisory";
+              tsunamiVal.style.color = "var(--accent-yellow)";
+              tsunamiBar.style.width = "45%";
+              tsunamiBar.style.background = "var(--accent-yellow)";
+              tsunamiSub.textContent = `Marine displacement evaluated. Strong rip currents possible along exposed coastlines.`;
+            } else {
+              tsunamiVal.textContent = "No Threat / Inactive";
+              tsunamiVal.style.color = "var(--accent-green)";
+              tsunamiBar.style.width = "10%";
+              tsunamiBar.style.background = "var(--accent-green)";
+              tsunamiSub.textContent = "No marine tsunamigenic triggers detected.";
+            }
+          }
+        }
+      } catch (e) {
+        quakeVal.textContent = "USGS Stream Standby";
+        tsunamiVal.textContent = "No Threat Detected";
+      }
+    }
+
+    // --- Fire Hazard & Thermal Hotspots Snippet ---
+    async function checkFireHazards(lat, lon, temp, humidity, windSpeed, rainMm) {
+      const fireVal = document.getElementById("fireVal");
+      const fireBar = document.getElementById("fireBar");
+      const fireSub = document.getElementById("fireSub");
+
+      let pm25 = 10;
+      let carbonMonoxide = 200;
+
+      try {
+        const airRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,carbon_monoxide&timezone=auto`);
+        if (airRes.ok) {
+          const airData = await airRes.json();
+          if (airData && airData.current) {
+            pm25 = airData.current.pm2_5 || 10;
+            carbonMonoxide = airData.current.carbon_monoxide || 200;
+          }
+        }
+      } catch (e) {
+        console.warn("Fire aerosol telemetry fallback", e);
+      }
+
+      const dryFactor = Math.max(0, (100 - humidity) / 10);
+      const windFactor = Math.max(1, windSpeed / 10);
+      const tempFactor = Math.max(0, (temp - 20) / 5);
+      const fireWeatherIndex = Math.round((dryFactor * 1.5 + tempFactor * 2.0) * windFactor);
+
+      const smokeElevated = pm25 > 50 && carbonMonoxide > 450;
+      const smokeSevere = pm25 > 90 || (pm25 > 60 && carbonMonoxide > 700);
+
+      if (smokeSevere || (fireWeatherIndex >= 35 && rainMm < 0.2)) {
+        fireVal.textContent = smokeSevere ? "Active Fire Plume / Smoke Alert" : "Extreme Wildfire Threat";
+        fireVal.style.color = "var(--accent-red)";
+        fireBar.style.width = "92%";
+        fireBar.style.background = "var(--accent-red)";
+        fireSub.textContent = smokeSevere 
+          ? `Thermal plume detected in local buffer (PM2.5: ${Math.round(pm25)} µg/m³, CO: ${Math.round(carbonMonoxide)} µg/m³). Avoid outdoor exposure.`
+          : `Dangerous fire weather index (${fireWeatherIndex}). Critical fuel dryness (${humidity}% RH) with ${Math.round(windSpeed)} km/h winds.`;
+      } else if (smokeElevated || (fireWeatherIndex >= 20 && rainMm < 1.0)) {
+        fireVal.textContent = smokeElevated ? "Agricultural Burning / Haze" : "Elevated Fire Danger";
+        fireVal.style.color = "var(--accent-orange)";
+        fireBar.style.width = "60%";
+        fireBar.style.background = "var(--accent-orange)";
+        fireSub.textContent = smokeElevated 
+          ? `Biomass burning or localized scrub fires detected nearby (PM2.5: ${Math.round(pm25)} µg/m³). Plume dispersion active.`
+          : `Moderate fire weather index (${fireWeatherIndex}). Dry vegetation fuels present. Outdoor burning restrictions advised.`;
+      } else {
+        fireVal.textContent = "Low / Controlled";
+        fireVal.style.color = "var(--accent-green)";
+        fireBar.style.width = "15%";
+        fireBar.style.background = "var(--accent-green)";
+        fireSub.textContent = `No active wildfire hotspots in immediate 50 km zone. Ambient relative humidity (${humidity}%) prevents spontaneous flare-ups.`;
+      }
+    }
+
+    // --- Atmospheric Hazards & Flooding / Squall Logic ---
+    async function loadAtmosphericHazards(lat, lon) {
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,surface_pressure&hourly=cape&daily=precipitation_sum,wind_speed_10m_max&timezone=auto&forecast_days=2`;
+
+      try {
+        const res = await fetch(weatherUrl);
+        if (!res.ok) throw new Error("Open-Meteo hazards failed");
+        const data = await res.json();
+
+        if (data && data.current) {
+          const temp = data.current.temperature_2m || 28;
+          const humidity = data.current.relative_humidity_2m || 65;
+          const weatherCode = data.current.weather_code || 0;
+          const rainMm = data.current.precipitation || 0;
+          const dailyRain = data.daily && data.daily.precipitation_sum ? data.daily.precipitation_sum[0] : 0;
+          const windSpd = data.current.wind_speed_10m || 10;
+          const windGust = data.current.wind_gusts_10m || (windSpd * 1.35);
+          const pressure = data.current.surface_pressure || 1010;
+
+          // Check Fire Hazards
+          checkFireHazards(lat, lon, temp, humidity, windSpd, rainMm);
+
+          // Flash & Basin Flooding
+          const floodVal = document.getElementById("floodVal");
+          const floodBar = document.getElementById("floodBar");
+          const floodSub = document.getElementById("floodSub");
+
+          if (rainMm >= 8.0 || dailyRain >= 60) {
+            floodVal.textContent = "High / Inundation Alert";
+            floodVal.style.color = "var(--accent-red)";
+            floodBar.style.width = "90%";
+            floodBar.style.background = "var(--accent-red)";
+            floodSub.textContent = `Severe ground saturation (~${rainMm.toFixed(1)} mm/h). High stream discharge and floodplain overflow expected in low basins.`;
+          } else if (rainMm >= 2.0 || dailyRain >= 20) {
+            floodVal.textContent = "Moderate Watch";
+            floodVal.style.color = "var(--accent-orange)";
+            floodBar.style.width = "50%";
+            floodBar.style.background = "var(--accent-orange)";
+            floodSub.textContent = `Elevated tributary runoff (~${dailyRain.toFixed(1)} mm today). Urban ponding and localized drainage backflow likely.`;
+          } else {
+            floodVal.textContent = "Minimal / Normal";
+            floodVal.style.color = "var(--accent-green)";
+            floodBar.style.width = "15%";
+            floodBar.style.background = "var(--accent-green)";
+            floodSub.textContent = "Runoff within normal channel capacities. No widespread flash flood or riverbank breaching detected.";
+          }
+
+          // Tropical Systems / Typhoons
+          const stormVal = document.getElementById("stormVal");
+          const stormBar = document.getElementById("stormBar");
+          const stormSub = document.getElementById("stormSub");
+
+          if (windGust >= 75 || (windSpd >= 50 && pressure < 1000)) {
+            stormVal.textContent = "Severe Tropical Storm / Typhoon";
+            stormVal.style.color = "var(--accent-red)";
+            stormBar.style.width = "95%";
+            stormBar.style.background = "var(--accent-red)";
+            stormSub.textContent = `Deep pressure depression (${pressure} hPa) with severe gale gusts (peak ${windGust} km/h). Structural hazard alert.`;
+          } else if (windGust >= 45 || pressure < 1004) {
+            stormVal.textContent = "Depression / Squall Watch";
+            stormVal.style.color = "var(--accent-orange)";
+            stormBar.style.width = "55%";
+            stormBar.style.background = "var(--accent-orange)";
+            stormSub.textContent = `Active convective wind shear detected (gusts up to ${windGust} km/h). Squall fronts passing overhead.`;
+          } else {
+            stormVal.textContent = "Quiescent / No Threat";
+            stormVal.style.color = "var(--accent-green)";
+            stormBar.style.width = "18%";
+            stormBar.style.background = "var(--accent-green)";
+            stormSub.textContent = `Normal gradient flow (${windSpd} km/h, ${pressure} hPa). No cyclonic vortex or organized tropical depression nearby.`;
+          }
+
+          // Convective Lightning Strikes
+          const curHour = new Date().getHours();
+          const cape = data.hourly && data.hourly.cape ? Math.round(data.hourly.cape[curHour] || 0) : 200;
+          const isThunder = [95, 96, 99].includes(weatherCode);
+
+          let strikes = 0;
+          if (isThunder) {
+            strikes = Math.max(14, Math.round(cape / 80));
+          } else if (cape > 1400) {
+            strikes = Math.round(cape / 280);
+          }
+
+          const lightningVal = document.getElementById("lightningVal");
+          const lightningBar = document.getElementById("lightningBar");
+          const lightningSub = document.getElementById("lightningSub");
+
+          lightningVal.textContent = `${strikes} / hr`;
+
+          if (strikes >= 10 || isThunder) {
+            lightningVal.style.color = "var(--accent-red)";
+            lightningBar.style.width = "90%";
+            lightningBar.style.background = "var(--accent-red)";
+            lightningSub.textContent = `Severe convective storm active. CAPE index high (${cape} J/kg). Cloud-to-ground strikes likely.`;
+          } else if (strikes > 0 || cape > 900) {
+            lightningVal.style.color = "var(--accent-orange)";
+            lightningBar.style.width = "45%";
+            lightningBar.style.background = "var(--accent-orange)";
+            lightningSub.textContent = `Atmospheric instability present (CAPE: ${cape} J/kg). Convective squall cells possible.`;
+          } else {
+            lightningVal.style.color = "var(--accent-green)";
+            lightningBar.style.width = "8%";
+            lightningBar.style.background = "var(--accent-green)";
+            lightningSub.textContent = `Stable boundary layer (CAPE: ${cape} J/kg). Lightning threat suppressed.`;
+          }
+        }
+      } catch (err) {
+        console.warn("Atmospheric hazards error", err);
+      }
+    }
+
+    // --- Lunar Module Setup ---
+    const PHASE_NAMES = [
+      "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
+      "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"
+    ];
+
+    const textureCanvas = document.createElement('canvas');
+    textureCanvas.width = 170;
+    textureCanvas.height = 170;
+
+    (function initTexture() {
+      const ctx = textureCanvas.getContext('2d');
+      const r = 85;
+
+      const bg = ctx.createRadialGradient(r - 20, r - 20, 10, r, r, r);
+      bg.addColorStop(0, '#f1f5f9');
+      bg.addColorStop(0.7, '#cbd5e1');
+      bg.addColorStop(1, '#94a3b8');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 170, 170);
+
+      const maria = [
+        { x: 65, y: 65, r: 24 }, { x: 88, y: 55, r: 18 }, { x: 105, y: 72, r: 15 },
+        { x: 60, y: 105, r: 28 }, { x: 110, y: 100, r: 20 }, { x: 82, y: 115, r: 22 },
+        { x: 45, y: 78, r: 14 }
+      ];
+      ctx.fillStyle = 'rgba(71, 85, 105, 0.35)';
+      maria.forEach(m => {
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+        ctx.filter = 'blur(6px)';
+        ctx.fill();
+      });
+      ctx.filter = 'none';
+    })();
+
+    function drawObserverMoon(fraction, phase, brightLimbAngle) {
+      const canvas = document.getElementById('moon-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      const r = w / 2;
+
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.translate(r, r);
+      ctx.rotate(brightLimbAngle);
+      ctx.translate(-r, -r);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(r, r, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(textureCanvas, 0, 0);
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(r, r, r, 0, Math.PI * 2);
+      ctx.clip();
+
+      ctx.fillStyle = 'rgba(11, 15, 25, 0.96)';
+
+      const isCrescent = fraction < 0.5;
+      const b = Math.abs(r * (1 - 2 * fraction));
+
+      ctx.beginPath();
+      ctx.arc(r, r, r, Math.PI / 2, (3 * Math.PI) / 2, false);
+
+      if (isCrescent) {
+        ctx.ellipse(r, r, b, r, 0, (3 * Math.PI) / 2, Math.PI / 2, false);
+      } else {
+        ctx.ellipse(r, r, b, r, 0, (3 * Math.PI) / 2, Math.PI / 2, true);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.arc(r, r, r, 0, Math.PI * 2);
+      const rim = ctx.createRadialGradient(r, r, r * 0.82, r, r, r);
+      rim.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      rim.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
+      ctx.fillStyle = rim;
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function getZonedParts(date, timeZone) {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric',
+        hour12: false
+      });
+      const parts = formatter.formatToParts(date);
+      const map = {};
+      parts.forEach(p => map[p.type] = p.value);
+      return {
+        year: parseInt(map.year),
+        month: parseInt(map.month) - 1,
+        day: parseInt(map.day),
+        hour: parseInt(map.hour === '24' ? '0' : map.hour),
+        minute: parseInt(map.minute),
+        second: parseInt(map.second)
+      };
+    }
+
+    function getZonedMidnight(now, timeZone) {
+      const parts = getZonedParts(now, timeZone);
+      let estimate = new Date(Date.UTC(parts.year, parts.month, parts.day, 0, 0, 0));
+      const check = getZonedParts(estimate, timeZone);
+      const diffMs = ((check.hour * 60 + check.minute) * 60 + check.second) * 1000;
+      return new Date(estimate.getTime() - diffMs);
+    }
+
+    function findNextPhaseDate(now, targetPhase) {
+      let t = now.getTime();
+      const step = 6 * 3600 * 1000;
+      const end = t + 35 * 86400 * 1000;
+
+      function getDiff(time) {
+        let p = SunCalc.getMoonIllumination(new Date(time)).phase;
+        let d = p - targetPhase;
+        if (d < -0.5) d += 1.0;
+        if (d > 0.5) d -= 1.0;
+        return d;
+      }
+
+      let d1 = getDiff(t);
+      t += step;
+
+      while (t < end) {
+        let d2 = getDiff(t);
+        if (d1 < 0 && d2 >= 0) {
+          let left = t - step;
+          let right = t;
+          for (let i = 0; i < 20; i++) {
+            let mid = (left + right) / 2;
+            if (getDiff(mid) < 0) left = mid;
+            else right = mid;
+          }
+          return new Date(right);
+        }
+        d1 = d2;
+        t += step;
+      }
+      return null;
+    }
+
+    function getTargetDayRiseSet(now, lat, lon, timeZone) {
+      const startOfDay = getZonedMidnight(now, timeZone);
+      const endOfDay = new Date(startOfDay.getTime() + 24 * 3600 * 1000 - 1);
+
+      let rise = null;
+      let set = null;
+
+      for (let offset = -1; offset <= 1; offset++) {
+        const sampleDate = new Date(startOfDay.getTime() + offset * 86400000 + 43200000);
+        const times = SunCalc.getMoonTimes(sampleDate, lat, lon, true);
+
+        if (times.rise && times.rise >= startOfDay && times.rise <= endOfDay) {
+          rise = times.rise;
+        }
+        if (times.set && times.set >= startOfDay && times.set <= endOfDay) {
+          set = times.set;
+        }
+      }
+
+      const statusTimes = SunCalc.getMoonTimes(now, lat, lon, true);
+      return {
+        rise,
+        set,
+        alwaysUp: statusTimes.alwaysUp,
+        alwaysDown: statusTimes.alwaysDown
+      };
+    }
+
+    function calculateLunarInfo(lat, lon, timeZone) {
+      const now = new Date();
+      const ill = SunCalc.getMoonIllumination(now);
+      const pos = SunCalc.getMoonPosition(now, lat, lon);
+
+      const brightLimbAngle = (ill.angle - pos.parallacticAngle) - Math.PI / 2;
+      const fraction = ill.fraction;
+      const phaseIdx = Math.floor((ill.phase + 0.0625) * 8) % 8;
+
+      const riseSet = getTargetDayRiseSet(now, lat, lon, timeZone);
+      const nextFullDate = findNextPhaseDate(now, 0.5);
+      const nextNewDate = findNextPhaseDate(now, 0.0);
+
+      const msPerDay = 86400000;
+      const daysToFull = nextFullDate ? Math.max(0, Math.ceil((nextFullDate - now) / msPerDay)) : 0;
+      const daysToNew = nextNewDate ? Math.max(0, Math.ceil((nextNewDate - now) / msPerDay)) : 0;
+      const altitudeDeg = Math.round(pos.altitude * (180 / Math.PI));
+
+      return {
+        timeZone,
+        phaseName: PHASE_NAMES[phaseIdx],
+        fraction: fraction,
+        phase: ill.phase,
+        brightLimbAngle: brightLimbAngle,
+        altitudeDeg: altitudeDeg,
+        moonrise: riseSet.rise,
+        moonset: riseSet.set,
+        alwaysUp: riseSet.alwaysUp,
+        alwaysDown: riseSet.alwaysDown,
+        nextFull: nextFullDate,
+        daysToFull: daysToFull,
+        nextNew: nextNewDate,
+        daysToNew: daysToNew
+      };
+    }
+
+    function formatTimeMoon(d, timeZone) {
+      if (!d) return "--:--";
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone });
+    }
+
+    function formatDateMoon(d, timeZone) {
+      if (!d) return "--";
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric', timeZone });
+    }
+
+    function updateMoonWidget() {
+      const active = getActiveCity();
+      const tz = active.timezone || "Asia/Bangkok";
+      const data = calculateLunarInfo(active.lat, active.lon, tz);
+
+      drawObserverMoon(data.fraction, data.phase, data.brightLimbAngle);
+
+      document.getElementById('phase-name').textContent = data.phaseName;
+      document.getElementById('illumination-val').textContent = `${Math.round(data.fraction * 100)}% Illuminated`;
+
+      const skyEl = document.getElementById('sky-status');
+      if (data.altitudeDeg > 0) {
+        skyEl.textContent = `▲ In Sky (${data.altitudeDeg}°)`;
+        skyEl.style.color = '#38bdf8';
+      } else {
+        skyEl.textContent = `▼ Below Horizon`;
+        skyEl.style.color = '#94a3b8';
+      }
+
+      if (data.alwaysUp) {
+        document.getElementById('moonrise-time').textContent = "All Day";
+        document.getElementById('moonrise-sub').textContent = "Above horizon";
+      } else if (data.alwaysDown) {
+        document.getElementById('moonrise-time').textContent = "None";
+        document.getElementById('moonrise-sub').textContent = "Below horizon";
+      } else {
+        document.getElementById('moonrise-time').textContent = formatTimeMoon(data.moonrise, data.timeZone);
+        document.getElementById('moonrise-sub').textContent = data.moonrise ? "Local time" : "No rise today";
+      }
+
+      if (data.alwaysUp || data.alwaysDown) {
+        document.getElementById('moonset-time').textContent = "--";
+        document.getElementById('moonset-sub').textContent = "--";
+      } else {
+        document.getElementById('moonset-time').textContent = formatTimeMoon(data.moonset, data.timeZone);
+        document.getElementById('moonset-sub').textContent = data.moonset ? "Local time" : "No set today";
+      }
+
+      document.getElementById('next-full-date').textContent = formatDateMoon(data.nextFull, data.timeZone);
+      document.getElementById('full-days-away').textContent = `in ${data.daysToFull} day${data.daysToFull === 1 ? '' : 's'}`;
+
+      document.getElementById('next-new-date').textContent = formatDateMoon(data.nextNew, data.timeZone);
+      document.getElementById('new-days-away').textContent = `in ${data.daysToNew} day${data.daysToNew === 1 ? '' : 's'}`;
+    }
+
+    function updateWindyWidget(lat, lon) {
+      const iframe = document.getElementById("windyIframe");
+      const externalLink = document.getElementById("windyExternalLink");
+      
+      const roundedLat = Number(lat).toFixed(4);
+      const roundedLon = Number(lon).toFixed(4);
+
+      if (iframe) {
+        const newSrc = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=5&overlay=wind&product=ecmwf&level=surface&lat=${roundedLat}&lon=${roundedLon}&detailLat=${roundedLat}&detailLon=${roundedLon}&pressure=true&message=true`;
+        if (iframe.src !== newSrc) {
+          iframe.src = newSrc;
+        }
+      }
+
+      if (externalLink) {
+        externalLink.href = `https://www.windy.com/?${roundedLat},${roundedLon},5`;
+      }
+    }
 
     const stored = localStorage.getItem("ios_weather_cities");
     if (stored) {
@@ -984,7 +2114,76 @@
       return cities[currentCityIndex] || cities[0];
     }
 
-    // Dynamic Weather Condition Animations (Sun, Clouds, Rain, Thunder, Pollution)
+    function getAqiColor(aqi) {
+      if (aqi <= 50) return '#A8E05F'; 
+      if (aqi <= 100) return '#FDD64B'; 
+      if (aqi <= 150) return '#FF9B57'; 
+      if (aqi <= 200) return '#FE6A69'; 
+      if (aqi <= 300) return '#A97ABC'; 
+      return '#A87383';                 
+    }
+
+    function calculatePM25FromAQI(aqi) {
+      if (aqi <= 50) return (aqi * (12.0 / 50)).toFixed(1);
+      if (aqi <= 100) return (12.1 + ((aqi - 51) * (35.4 - 12.1) / 49)).toFixed(1);
+      if (aqi <= 150) return (35.5 + ((aqi - 101) * (55.4 - 35.5) / 49)).toFixed(1);
+      if (aqi <= 200) return (55.5 + ((aqi - 151) * (150.4 - 55.5) / 49)).toFixed(1);
+      if (aqi <= 300) return (150.5 + ((aqi - 201) * (250.4 - 150.5) / 99)).toFixed(1);
+      return (250.5 + ((aqi - 301) * (350.4 - 250.5) / 99)).toFixed(1);
+    }
+
+    async function updateIQAirWidget(lat, lon) {
+      try {
+        const response = await fetch(`https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${iqAirKey}`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+          const data = result.data;
+          const pollution = data.current.pollution;
+          const aqi = pollution.aqius;
+
+          document.getElementById('iqair-city').textContent = data.city;
+          document.getElementById('iqair-country').textContent = `${data.state}, ${data.country}`.replace(/^, /, '');
+          
+          const aqiEl = document.getElementById('iqair-aqi');
+          aqiEl.textContent = aqi;
+          aqiEl.style.color = getAqiColor(aqi);
+
+          let pm25Text = '';
+          if (pollution.p2 && pollution.p2.conc !== undefined) {
+            pm25Text = `${pollution.p2.conc} µg/m³`;
+          } else if (pollution.mainus === 'p2') {
+            pm25Text = `~${calculatePM25FromAQI(aqi)} µg/m³ (est.)`;
+          } else {
+            pm25Text = 'Data unavailable';
+          }
+          
+          document.getElementById('iqair-pm25').textContent = `Primary Pollutant PM2.5: ${pm25Text}`;
+
+          const bar = document.getElementById('iqair-bar');
+          bar.style.width = `${Math.min(100, (aqi / 300) * 100)}%`;
+          bar.style.background = getAqiColor(aqi);
+          
+          let statusText = "Good";
+          if(aqi > 50) statusText = "Moderate";
+          if(aqi > 100) statusText = "Unhealthy for Sensitive Groups";
+          if(aqi > 150) statusText = "Unhealthy";
+          if(aqi > 200) statusText = "Very Unhealthy";
+          if(aqi > 300) statusText = "Hazardous";
+          
+          document.getElementById('iqair-label').textContent = `US AQI · ${statusText}`;
+        } else {
+          document.getElementById('iqair-city').textContent = "Sensor Offline";
+          document.getElementById('iqair-aqi').textContent = "--";
+          document.getElementById('iqair-aqi').style.color = "var(--text-primary)";
+          document.getElementById('iqair-pm25').textContent = "PM2.5: Data unavailable";
+        }
+      } catch (error) {
+        console.error('IQAir fetch error:', error);
+        document.getElementById('iqair-city').textContent = "Connection Error";
+      }
+    }
+
     function renderWeatherHeaderAnimation(weatherCode, aqi = 30) {
       const container = document.getElementById("weatherAnimWrapper");
       const isThunder = weatherCode === 8000 || [95, 96, 99].includes(weatherCode);
@@ -1043,7 +2242,6 @@
       }
     }
 
-    // Leaflet Satellite & Live Precipitation Radar (Zoomed out to Level 5)
     function initOrUpdateSatelliteMap(lat, lon) {
       const zoomUrl = `https://zoom.earth/maps/satellite/#view=${lat},${lon},5z`;
       document.getElementById("zoomEarthExternalLink").href = zoomUrl;
@@ -1056,13 +2254,11 @@
           maxZoom: 9
         }).setView([lat, lon], 5);
 
-        // ESRI True-Color High-Resolution Satellite Layer
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
           maxZoom: 9,
           detectRetina: true
         }).addTo(leafletMap);
 
-        // Global RainViewer Weather Radar Composite Layer
         fetch('https://api.rainviewer.com/public/weather-maps.json')
           .then(res => res.json())
           .then(data => {
@@ -1091,12 +2287,14 @@
 
     function renderPagination() {
       const container = document.getElementById("dockPagination");
+      if (!container) return;
       container.innerHTML = "";
 
       cities.forEach((city, index) => {
         const item = document.createElement("div");
         item.className = `dock-bullet-item ${index === currentCityIndex ? 'active' : ''}`;
         item.title = `${city.name}`;
+        item.id = `dock-item-${index}`;
         item.onclick = () => goToCity(index);
 
         if (index === 0 && city.isCurrent) {
@@ -1110,6 +2308,11 @@
         }
         container.appendChild(item);
       });
+
+      const activeEl = document.getElementById(`dock-item-${currentCityIndex}`);
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
     }
 
     function goToCity(newIndex, direction = null) {
@@ -1167,20 +2370,43 @@
       if (e.key === "ArrowLeft") prevCity();
     });
 
+    function getTimeDiffString(targetTimezone) {
+      try {
+        const now = new Date();
+        const targetFmt = new Intl.DateTimeFormat('en-US', {
+          timeZone: targetTimezone,
+          year: 'numeric', month: 'numeric', day: 'numeric',
+          hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false
+        });
+        const tParts = targetFmt.formatToParts(now).reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {});
+        const targetUtc = Date.UTC(tParts.year, tParts.month - 1, tParts.day, tParts.hour, tParts.minute, tParts.second);
+        const localUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
+
+        const diffHours = Math.round((targetUtc - localUtc) / (1000 * 60 * 60));
+        if (diffHours === 0) return "";
+        return `(${diffHours > 0 ? '+' : ''}${diffHours})`;
+      } catch (e) {
+        return "";
+      }
+    }
+
     function updateClock() {
       const active = getActiveCity();
       const tz = active.timezone || "Asia/Bangkok";
       const now = new Date();
-      const timeStr = now.toLocaleTimeString("en-US", {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        timeZone: tz
-      });
-      document.getElementById("live-clock").innerText = timeStr;
-      updateSolarTransit();
-      updateMoonEphemeris(now);
+
+      try {
+        const timeStr = now.toLocaleTimeString("en-GB", {
+          hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: tz
+        });
+        const offsetStr = getTimeDiffString(tz);
+        document.getElementById("live-clock").innerText = offsetStr ? `${timeStr} ${offsetStr}` : timeStr;
+      } catch (e) {
+        document.getElementById("live-clock").innerText = now.toLocaleTimeString();
+      }
+
+      updateTransitEphemerisDisplay();
+      updateMoonWidget();
     }
     setInterval(updateClock, 1000);
 
@@ -1238,17 +2464,54 @@
       };
     }
 
-    function updateSolarTransit() {
+    function getQuadraticBezierPoint(t, p0, p1, p2) {
+      const oneMinusT = 1 - t;
+      const x = oneMinusT * oneMinusT * p0.x + 2 * oneMinusT * t * p1.x + t * t * p2.x;
+      const y = oneMinusT * oneMinusT * p0.y + 2 * oneMinusT * t * p1.y + t * t * p2.y;
+      return { x, y };
+    }
+
+    function formatTimeTZ(dateObj, tz) {
+      return dateObj.toLocaleTimeString("en-US", {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: tz
+      });
+    }
+
+    async function fetchSolarEphemeris(lat, lon) {
+      try {
+        const sunUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=UTC&forecast_days=3`;
+        const res = await fetch(sunUrl);
+        const data = await res.json();
+
+        if (data.daily && data.daily.sunrise && data.daily.sunset) {
+          transitSunriseDate = new Date(data.daily.sunrise[0] + ":00Z");
+          transitSunsetDate = new Date(data.daily.sunset[0] + ":00Z");
+          transitNextSunriseDate = new Date(data.daily.sunrise[1] + ":00Z");
+
+          const now = new Date();
+          if (now > transitSunsetDate && data.daily.sunrise[2]) {
+            if (now > transitNextSunriseDate) {
+              transitSunriseDate = new Date(data.daily.sunrise[1] + ":00Z");
+              transitSunsetDate = new Date(data.daily.sunset[1] + ":00Z");
+              transitNextSunriseDate = new Date(data.daily.sunrise[2] + ":00Z");
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Error fetching solar ephemeris:", err);
+        const fb = computeSolarTimes(new Date());
+        transitSunriseDate = fb.sunrise;
+        transitSunsetDate = fb.sunset;
+        transitNextSunriseDate = new Date(fb.sunrise.getTime() + 24 * 60 * 60 * 1000);
+      }
+      updateTransitEphemerisDisplay();
+    }
+
+    function updateTransitEphemerisDisplay() {
       const now = new Date();
-      const { sunrise, sunset } = computeSolarTimes(now);
-
-      const totalDaylightMs = sunset - sunrise;
-      const elapsedMs = now - sunrise;
-      const pct = Math.max(0, Math.min(100, (elapsedMs / totalDaylightMs) * 100));
-
-      const isDay = now >= sunrise && now < sunset;
-      const sunriseFmt = sunrise.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-      const sunsetFmt = sunset.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
       const solarCurrent = estimateSolarOutput600W(now, currentCloudCover);
       document.getElementById("solar-current-w").innerText = `${Math.round(solarCurrent.watts)} W`;
@@ -1258,71 +2521,55 @@
       const estDailyWh = Math.round(2700 * (1 - (currentCloudCover / 100) * 0.52));
       document.getElementById("solar-est-daily").innerText = `Est. Today: ~${estDailyWh} Wh · GHI: ${solarCurrent.ghi} W/m²`;
 
-      const dot = document.getElementById("sun-arc-dot");
-      const sunTitle = document.getElementById("sun-title");
-      const sunMain = document.getElementById("sunset-time-main");
-      const sunTimes = document.getElementById("sun-times");
+      if (!transitSunriseDate || !transitSunsetDate) return;
+      const active = getActiveCity();
+      const currentTz = active.timezone || "Asia/Bangkok";
+
+      const isDay = now >= transitSunriseDate && now < transitSunsetDate;
+      const orb = document.getElementById("celestialOrb");
+      const p0 = { x: 25, y: 135 };
+      const p1 = { x: 160, y: 20 };
+      const p2 = { x: 295, y: 135 };
+
+      let t = 0;
 
       if (isDay) {
-        sunTitle.innerText = "SUNSET";
-        sunMain.innerText = sunsetFmt;
-        sunTimes.innerText = `Sunrise: ${sunriseFmt}`;
+        const totalDaylight = transitSunsetDate.getTime() - transitSunriseDate.getTime();
+        const elapsed = now.getTime() - transitSunriseDate.getTime();
+        t = Math.max(0, Math.min(1, elapsed / totalDaylight));
 
-        const t = pct / 100;
-        const arcX = 5 + (140 * t);
-        const arcY = (1 - t) * (1 - t) * 32 + 2 * (1 - t) * t * 0 + t * t * 32;
-        dot.setAttribute("cx", arcX);
-        dot.setAttribute("cy", Math.max(2, arcY));
+        orb.setAttribute("fill", "#fbbf24");
+        document.getElementById("sunTransitHeaderTitle").innerText = "SOLAR TRANSIT";
+        document.getElementById("startTag").innerText = "Sunrise";
+        document.getElementById("startTimeVal").innerText = formatTimeTZ(transitSunriseDate, currentTz);
+        document.getElementById("endTag").innerText = "Sunset";
+        document.getElementById("endTimeVal").innerText = formatTimeTZ(transitSunsetDate, currentTz);
+        document.getElementById("statusDesc").innerText = `Daylight active · Sun at ${Math.round(t * 100)}% of arc`;
       } else {
-        sunTitle.innerText = "SUNRISE";
-        sunMain.innerText = sunriseFmt;
-        sunTimes.innerText = `Sunset: ${sunsetFmt}`;
-        dot.setAttribute("cx", "5");
-        dot.setAttribute("cy", "32");
+        let totalNight, elapsed;
+        if (now >= transitSunsetDate) {
+          totalNight = (transitNextSunriseDate ? transitNextSunriseDate.getTime() : transitSunsetDate.getTime() + 12 * 3600000) - transitSunsetDate.getTime();
+          elapsed = now.getTime() - transitSunsetDate.getTime();
+        } else {
+          const prevSunset = new Date(transitSunsetDate.getTime() - 24 * 60 * 60 * 1000);
+          totalNight = transitSunriseDate.getTime() - prevSunset.getTime();
+          elapsed = now.getTime() - prevSunset.getTime();
+        }
+
+        t = Math.max(0, Math.min(1, elapsed / (totalNight || 1)));
+
+        orb.setAttribute("fill", "#93c5fd");
+        document.getElementById("sunTransitHeaderTitle").innerText = "LUNAR TRANSIT";
+        document.getElementById("startTag").innerText = "Sunset";
+        document.getElementById("startTimeVal").innerText = formatTimeTZ(transitSunsetDate, currentTz);
+        document.getElementById("endTag").innerText = "Sunrise";
+        document.getElementById("endTimeVal").innerText = formatTimeTZ(transitNextSunriseDate || transitSunriseDate, currentTz);
+        document.getElementById("statusDesc").innerText = `Nighttime · Moon at ${Math.round(t * 100)}% of transit`;
       }
-    }
 
-    function updateMoonEphemeris(targetDate) {
-      const d = targetDate || new Date();
-      const refDate = new Date(Date.UTC(2024, 0, 11, 11, 57));
-      const synodicDays = 29.53058867;
-      const diffMs = d - refDate;
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
-      const phaseAge = ((diffDays % synodicDays) + synodicDays) % synodicDays;
-      const phaseRatio = phaseAge / synodicDays;
-      const illumPct = Math.round(((1 - Math.cos(phaseRatio * 2 * Math.PI)) / 2) * 100);
-
-      let phaseName = "WANING CRESCENT";
-      if (phaseRatio < 0.03 || phaseRatio >= 0.97) phaseName = "NEW MOON";
-      else if (phaseRatio < 0.22) phaseName = "WAXING CRESCENT";
-      else if (phaseRatio < 0.28) phaseName = "FIRST QUARTER";
-      else if (phaseRatio < 0.47) phaseName = "WAXING GIBBOUS";
-      else if (phaseRatio < 0.53) phaseName = "FULL MOON";
-      else if (phaseRatio < 0.72) phaseName = "WANING GIBBOUS";
-      else if (phaseRatio < 0.78) phaseName = "LAST QUARTER";
-
-      const fullMoonAge = 14.765;
-      const daysToFull = phaseAge < fullMoonAge 
-        ? Math.round(fullMoonAge - phaseAge) 
-        : Math.round(synodicDays - phaseAge + fullMoonAge);
-
-      const moonriseHour = (6 + phaseAge * (24 / synodicDays)) % 24;
-      const mHour = Math.floor(moonriseHour);
-      const mMins = Math.floor((moonriseHour - mHour) * 60);
-      const isAm = mHour < 12;
-      const formattedHour = mHour % 12 || 12;
-
-      document.getElementById("moon-phase-title").innerText = phaseName;
-      document.getElementById("moon-illumination").innerText = `${illumPct}%`;
-      document.getElementById("moon-rise-time").innerText = `${formattedHour}:${mMins < 10 ? '0' : ''}${mMins} in the ${isAm ? 'morning' : 'evening'}`;
-      document.getElementById("moon-next-full").innerText = `${daysToFull} DAYS`;
-
-      const pathEl = document.getElementById("moonCrescentPath");
-      if (phaseRatio > 0.5) {
-        pathEl.setAttribute("d", `M 50 6 A 44 44 0 0 0 50 94 A ${(illumPct / 100) * 44} 44 0 0 1 50 6`);
-      } else {
-        pathEl.setAttribute("d", `M 50 6 A 44 44 0 0 1 50 94 A ${(illumPct / 100) * 44} 44 0 0 0 50 6`);
-      }
+      const point = getQuadraticBezierPoint(t, p0, p1, p2);
+      orb.setAttribute("cx", point.x);
+      orb.setAttribute("cy", point.y);
     }
 
     function renderPressureDial(pressureHpa, prevPressureHpa = 1008) {
@@ -1368,7 +2615,6 @@
       document.getElementById("pressureTrendArrow").innerText = pressureHpa <= prevPressureHpa ? "↓" : "↑";
     }
 
-    // Consolidated Climate Widget Updater
     function updateClimateWidget(curTemp, feelsTemp, conditionText, highTemp, lowTemp, avgBaseline, aqi, pm25, uv, humidity, rainProb, dewPoint) {
       const roundCur = Math.round(curTemp);
       const roundFeels = Math.round(feelsTemp);
@@ -1397,21 +2643,6 @@
       badge.style.color = diff > 0 ? "#fb923c" : (diff < 0 ? "#38bdf8" : "#ffffff");
       document.getElementById("unified-avg-baseline").innerText = `${diff >= 0 ? 'above' : 'below'} avg (${avgBaseline}°)`;
 
-      // 1. Air Quality Bar
-      let aqiCategory = "Good";
-      let aqiColor = "#34d399";
-      let aqiBarPct = Math.min(100, Math.round((aqi / 200) * 100));
-      if (aqi > 150) { aqiCategory = "Unhealthy"; aqiColor = "#f87171"; }
-      else if (aqi > 100) { aqiCategory = "Sensitive"; aqiColor = "#fb923c"; }
-      else if (aqi > 50) { aqiCategory = "Moderate"; aqiColor = "#fbbf24"; }
-
-      document.getElementById("dot-aqi").style.background = aqiColor;
-      document.getElementById("label-aqi").innerText = `Air Quality: ${aqiCategory}`;
-      document.getElementById("metric-aqi").innerText = `AQI ${aqi} · PM2.5 ${pm25} µg/m³`;
-      document.getElementById("bar-aqi").style.background = aqiColor;
-      document.getElementById("bar-aqi").style.width = `${Math.max(10, aqiBarPct)}%`;
-
-      // 2. UV Index Bar
       let uvCategory = "Low";
       let uvColor = "#34d399";
       if (uv > 10) { uvCategory = "Extreme"; uvColor = "#c084fc"; }
@@ -1426,7 +2657,6 @@
       document.getElementById("bar-uv").style.background = uvColor;
       document.getElementById("bar-uv").style.width = `${Math.max(8, uvPct)}%`;
 
-      // 3. Humidity Bar
       let humidCategory = "Comfortable";
       let humidColor = "#38bdf8";
       if (humidity > 78) { humidCategory = "Very Humid"; humidColor = "#a855f7"; }
@@ -1439,7 +2669,6 @@
       document.getElementById("bar-humidity").style.background = humidColor;
       document.getElementById("bar-humidity").style.width = `${Math.max(8, humidity)}%`;
 
-      // 4. Rain Probability Bar
       let probCategory = "Minimal";
       let probColor = "#38bdf8";
       if (rainProb > 70) { probCategory = "Very Likely"; probColor = "#6366f1"; }
@@ -1451,6 +2680,9 @@
       document.getElementById("metric-prob").innerText = `${Math.round(rainProb)}% in next 60m`;
       document.getElementById("bar-prob").style.background = probColor;
       document.getElementById("bar-prob").style.width = `${Math.max(rainProb > 0 ? 8 : 2, rainProb)}%`;
+
+      // Update Bioclimatic indicators
+      processBioclimaticMetrics(roundCur, Math.round(humidity));
     }
 
     const weatherCodeMap = {
@@ -1575,6 +2807,7 @@
           rain: h.values.rainIntensity || 0,
           cloud: cloud,
           temp: h.values.temperature,
+          humidity: h.values.humidity || 60,
           pm25: pmVal,
           dew: h.values.dewPoint || h.values.temperature,
           wind: (h.values.windSpeed || 0) * 3.6,
@@ -1586,13 +2819,13 @@
         };
       });
 
-      // 7-day Daily Projection Cache
       cachedDaily = daily.slice(0, 7).map((d, idx) => {
         const estWh = Math.round(2700 * (1 - ((d.values.cloudCoverAvg || 35) / 100) * 0.52));
         return {
           time: d.time,
           tempMax: d.values.temperatureMax,
           tempMin: d.values.temperatureMin,
+          humidityAvg: 65,
           rainSum: d.values.rainAccumulationSum || 0,
           windMax: (d.values.windSpeedMax || 4) * 3.6,
           uvMax: d.values.uvIndexMax || 6,
@@ -1628,19 +2861,17 @@
         todayLow = Math.round(d0.temperatureMin);
         document.getElementById("hero-high-low").innerText = `H: ${todayHigh}° L: ${todayLow}°`;
       }
+      document.getElementById("narrative-daily-text").innerText = `Anticipated high of ${todayHigh}° and low of ${todayLow}° today with ${weatherLabel.toLowerCase()}.`;
 
-      // Update All-in-One Climate Widget
       updateClimateWidget(
         currentTemp, feelsTemp, weatherLabel, todayHigh, todayLow, active.baselineAvg || 32,
         latestAqi, latestPm25, Math.round(cur.uvIndex || 0), cur.humidity || 56,
         cur.precipitationProbability || 0, cur.dewPoint || cur.temperature
       );
 
-      // Pressure Dial
       const presVal = Math.round(cur.pressureSurfaceLevel || 1006);
       renderPressureDial(presVal, hourly[1] ? hourly[1].values.pressureSurfaceLevel : 1008);
 
-      // Telemetry Metrics
       const rainVal = (cur.rainIntensity || 0).toFixed(1);
       document.getElementById("val-rain").innerText = `${rainVal} mm/h`;
       document.getElementById("rain-rate-sub").innerText = rainVal > 0 ? "Active rainfall rate." : "No rain in the past hour.";
@@ -1667,7 +2898,8 @@
       document.getElementById("val-visibility").innerText = `${visVal} km`;
 
       initCanvasEngine(cur.weatherCode, cur.rainIntensity || 0, cur.cloudCover || 0, windKmh);
-      updateSolarTransit();
+      updateTransitEphemerisDisplay();
+      updateMoonWidget();
       renderActiveHourlyChart();
       renderActiveDailyChart();
     }
@@ -1700,6 +2932,7 @@
           rain: hourly.rain[i] || 0,
           cloud: cloud,
           temp: hourly.temperature_2m[i],
+          humidity: hourly.relative_humidity_2m[i] || 60,
           pm25: pmVal,
           dew: hourly.dew_point_2m[i] || hourly.temperature_2m[i],
           wind: hourly.wind_speed_10m[i] || 0,
@@ -1718,6 +2951,7 @@
           time: daily.time[i],
           tempMax: daily.temperature_2m_max[i],
           tempMin: daily.temperature_2m_min[i],
+          humidityAvg: 65,
           rainSum: daily.rain_sum[i] || 0,
           windMax: daily.wind_speed_10m_max ? daily.wind_speed_10m_max[i] : 14,
           uvMax: daily.uv_index_max ? daily.uv_index_max[i] : 6,
@@ -1744,8 +2978,8 @@
       const max0 = Math.round(daily.temperature_2m_max[0]);
       const min0 = Math.round(daily.temperature_2m_min[0]);
       document.getElementById("hero-high-low").innerText = `H: ${max0}° L: ${min0}°`;
+      document.getElementById("narrative-daily-text").innerText = `Anticipated high of ${max0}° and low of ${min0}° today with ${weatherLabel.toLowerCase()}.`;
 
-      // Update Climate Widget
       updateClimateWidget(
         currentTemp, feelsTemp, weatherLabel, max0, min0, active.baselineAvg || 32,
         latestAqi, latestPm25, Math.round(hourly.uv_index ? hourly.uv_index[startIdx] : 0),
@@ -1753,7 +2987,6 @@
         hourly.dew_point_2m[startIdx] || cur.temperature_2m
       );
 
-      // Pressure Dial
       const presVal = Math.round(cur.surface_pressure || 1006);
       renderPressureDial(presVal, hourly.surface_pressure[nextIdx] || 1008);
 
@@ -1783,7 +3016,8 @@
       document.getElementById("val-visibility").innerText = `${visKm} km`;
 
       initCanvasEngine(cur.weather_code, cur.rain, cur.cloud_cover, cur.wind_speed_10m);
-      updateSolarTransit();
+      updateTransitEphemerisDisplay();
+      updateMoonWidget();
       renderActiveHourlyChart();
       renderActiveDailyChart();
     }
@@ -1879,7 +3113,6 @@
       loop();
     }
 
-    // 24-Hour Hourly Switch View
     function switchHourlyView(view) {
       currentHourlyView = view;
       const parent = document.getElementById("hourlyForecastChart").parentElement;
@@ -1906,7 +3139,38 @@
         x: { grid: { display: false }, ticks: { color: "rgba(255, 255, 255, 0.6)", font: { size: 10 } } }
       };
 
-      if (currentHourlyView === 'rain') {
+      if (currentHourlyView === 'temp') {
+        datasets = [
+          { type: "line", label: "Temp (°C)", data: slice.map(h => h.temp), borderColor: "#ffffff", backgroundColor: "rgba(255, 255, 255, 0.1)", fill: true, borderWidth: 2, pointRadius: 2, tension: 0.3, yAxisID: "y" }
+        ];
+        scales.y = { grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}°` } };
+
+      } else if (currentHourlyView === 'humidity') {
+        datasets = [
+          { type: "line", label: "Humidity (%)", data: slice.map(h => h.humidity), borderColor: "#38bdf8", backgroundColor: "rgba(56, 189, 248, 0.15)", fill: true, tension: 0.3, yAxisID: "y" }
+        ];
+        scales.y = { min: 0, max: 100, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}%` } };
+
+      } else if (currentHourlyView === 'uv') {
+        datasets = [
+          { type: "bar", label: "UV Index", data: slice.map(h => h.uv), backgroundColor: "rgba(251, 191, 36, 0.8)", borderRadius: 6, yAxisID: "y" }
+        ];
+        scales.y = { beginAtZero: true, max: 12, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)" } };
+
+      } else if (currentHourlyView === 'pm25') {
+        datasets = [
+          { type: "bar", label: "PM2.5 (µg/m³)", data: slice.map(h => h.pm25), backgroundColor: "rgba(52, 211, 153, 0.8)", borderRadius: 6, yAxisID: "y" }
+        ];
+        scales.y = { beginAtZero: true, max: 40, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} µg` } };
+
+      } else if (currentHourlyView === 'wind') {
+        datasets = [
+          { type: "line", label: "Wind (km/h)", data: slice.map(h => h.wind), borderColor: "#93c5fd", tension: 0.3, yAxisID: "y" },
+          { type: "line", label: "Gusts (km/h)", data: slice.map(h => h.gust), borderColor: "rgba(255, 255, 255, 0.5)", borderDash: [3, 3], tension: 0.3, yAxisID: "y" }
+        ];
+        scales.y = { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)" } };
+
+      } else if (currentHourlyView === 'rain') {
         datasets = [
           { type: "bar", label: "Rain (mm/h)", data: slice.map(h => h.rain), backgroundColor: "rgba(125, 211, 252, 0.8)", borderRadius: 6, yAxisID: "y" },
           { type: "line", label: "Cloud Cover (%)", data: slice.map(h => h.cloud), borderColor: "rgba(255, 255, 255, 0.6)", borderWidth: 1.5, pointRadius: 0, tension: 0.35, yAxisID: "y1" }
@@ -1923,37 +3187,6 @@
           { type: "line", label: "600W Output (W)", data: slice.map(h => Math.round(h.solarWatts)), borderColor: "#facc15", backgroundColor: solarGrad, fill: true, borderWidth: 2, pointRadius: 1, tension: 0.35, yAxisID: "y" }
         ];
         scales.y = { beginAtZero: true, max: 600, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}W` } };
-
-      } else if (currentHourlyView === 'temp') {
-        datasets = [
-          { type: "line", label: "Temp (°C)", data: slice.map(h => h.temp), borderColor: "#ffffff", backgroundColor: "rgba(255, 255, 255, 0.1)", fill: true, borderWidth: 2, pointRadius: 2, tension: 0.3, yAxisID: "y" }
-        ];
-        scales.y = { grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}°` } };
-
-      } else if (currentHourlyView === 'pm25') {
-        datasets = [
-          { type: "bar", label: "PM2.5 (µg/m³)", data: slice.map(h => h.pm25), backgroundColor: "rgba(52, 211, 153, 0.8)", borderRadius: 6, yAxisID: "y" }
-        ];
-        scales.y = { beginAtZero: true, max: 40, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} µg` } };
-
-      } else if (currentHourlyView === 'wind') {
-        datasets = [
-          { type: "line", label: "Wind (km/h)", data: slice.map(h => h.wind), borderColor: "#93c5fd", tension: 0.3, yAxisID: "y" },
-          { type: "line", label: "Gusts (km/h)", data: slice.map(h => h.gust), borderColor: "rgba(255, 255, 255, 0.5)", borderDash: [3, 3], tension: 0.3, yAxisID: "y" }
-        ];
-        scales.y = { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)" } };
-
-      } else if (currentHourlyView === 'uv') {
-        datasets = [
-          { type: "bar", label: "UV Index", data: slice.map(h => h.uv), backgroundColor: "rgba(251, 191, 36, 0.8)", borderRadius: 6, yAxisID: "y" }
-        ];
-        scales.y = { beginAtZero: true, max: 12, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)" } };
-
-      } else if (currentHourlyView === 'pressure') {
-        datasets = [
-          { type: "line", label: "Pressure (hPa)", data: slice.map(h => h.pressure), borderColor: "#ffffff", backgroundColor: "rgba(255, 255, 255, 0.08)", fill: true, tension: 0.25, yAxisID: "y" }
-        ];
-        scales.y = { grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}hPa` } };
       }
 
       hourlyChartInstance = new Chart(ctx, {
@@ -1973,7 +3206,6 @@
       });
     }
 
-    // 7-Day Forecast Switch View
     function switchDailyView(view) {
       currentDailyView = view;
       const parent = document.getElementById("dailyForecastChart").parentElement;
@@ -2007,17 +3239,17 @@
         ];
         scales.y = { grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}°` } };
 
-      } else if (currentDailyView === 'rain') {
+      } else if (currentDailyView === 'humidity') {
         datasets = [
-          { type: "bar", label: "Daily Rain (mm)", data: cachedDaily.map(d => d.rainSum.toFixed(1)), backgroundColor: "rgba(56, 189, 248, 0.8)", borderRadius: 6, yAxisID: "y" }
+          { type: "bar", label: "Avg Humidity (%)", data: cachedDaily.map(d => Math.round(d.humidityAvg)), backgroundColor: "rgba(56, 189, 248, 0.8)", borderRadius: 6, yAxisID: "y" }
         ];
-        scales.y = { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}mm` } };
+        scales.y = { min: 0, max: 100, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}%` } };
 
-      } else if (currentDailyView === 'solar') {
+      } else if (currentDailyView === 'uv') {
         datasets = [
-          { type: "bar", label: "Est. Solar (Wh)", data: cachedDaily.map(d => d.solarWh), backgroundColor: "rgba(250, 204, 21, 0.8)", borderRadius: 6, yAxisID: "y" }
+          { type: "bar", label: "Max UV", data: cachedDaily.map(d => Math.round(d.uvMax)), backgroundColor: "rgba(251, 191, 36, 0.8)", borderRadius: 6, yAxisID: "y" }
         ];
-        scales.y = { beginAtZero: true, max: 3000, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} Wh` } };
+        scales.y = { beginAtZero: true, max: 12, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)" } };
 
       } else if (currentDailyView === 'pm25') {
         datasets = [
@@ -2031,11 +3263,17 @@
         ];
         scales.y = { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} km/h` } };
 
-      } else if (currentDailyView === 'uv') {
+      } else if (currentDailyView === 'rain') {
         datasets = [
-          { type: "bar", label: "Max UV", data: cachedDaily.map(d => Math.round(d.uvMax)), backgroundColor: "rgba(251, 191, 36, 0.8)", borderRadius: 6, yAxisID: "y" }
+          { type: "bar", label: "Daily Rain (mm)", data: cachedDaily.map(d => d.rainSum.toFixed(1)), backgroundColor: "rgba(56, 189, 248, 0.8)", borderRadius: 6, yAxisID: "y" }
         ];
-        scales.y = { beginAtZero: true, max: 12, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)" } };
+        scales.y = { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}mm` } };
+
+      } else if (currentDailyView === 'solar') {
+        datasets = [
+          { type: "bar", label: "Est. Solar (Wh)", data: cachedDaily.map(d => d.solarWh), backgroundColor: "rgba(250, 204, 21, 0.8)", borderRadius: 6, yAxisID: "y" }
+        ];
+        scales.y = { beginAtZero: true, max: 3000, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} Wh` } };
       }
 
       dailyChartInstance = new Chart(ctx, {
@@ -2055,7 +3293,76 @@
       });
     }
 
-    // Modal Sheet & Search Handlers
+    async function fetchEarthquakes() {
+        const loadingEl = document.getElementById('eq-loading');
+        const errorEl = document.getElementById('eq-error');
+
+        try {
+            const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            const data = await response.json();
+            allEarthquakes = data.features;
+
+            loadingEl.style.display = 'none';
+            document.getElementById('eq-update-time').textContent = `Updated: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+            filterAndRenderEq();
+        } catch (err) {
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+        }
+    }
+
+    function filterAndRenderEq() {
+        const threshold = parseFloat(document.getElementById('mag-filter').value);
+        const noEqEl = document.getElementById('eq-no-data');
+        const listEl = document.getElementById('earthquake-list');
+
+        const filtered = allEarthquakes.filter(eq => eq.properties.mag > threshold);
+
+        if (filtered.length === 0) {
+            noEqEl.style.display = 'block';
+            listEl.style.display = 'none';
+            noEqEl.textContent = `No earthquakes > M${threshold} recorded today. 🎉`;
+            return;
+        }
+
+        noEqEl.style.display = 'none';
+        listEl.style.display = 'flex';
+        listEl.innerHTML = '';
+
+        filtered.forEach(eq => {
+            const props = eq.properties;
+            const time = new Date(props.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let badgeColor = '#f97316';
+            if (props.mag >= 7.0) badgeColor = '#b91c1c';
+            else if (props.mag >= 6.5) badgeColor = '#ef4444';
+            else if (props.mag < 4.0) badgeColor = '#eab308';
+
+            const item = document.createElement('li');
+            item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;';
+            
+            item.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
+                    <span style="background: ${badgeColor}; color: white; font-weight: bold; padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; flex-shrink: 0;">
+                        M ${props.mag.toFixed(1)}
+                    </span>
+                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${props.place}">${props.place}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">${time}</div>
+                    </div>
+                </div>
+                <a href="${props.url}" target="_blank" style="font-size: 0.75rem; color: #38bdf8; text-decoration: none; font-weight: 500; flex-shrink: 0; margin-left: 8px;">
+                    Details &rarr;
+                </a>
+            `;
+            listEl.appendChild(item);
+        });
+    }
+
+    // Modal Sheet Handlers
     function toggleCityModal(show) {
       const backdrop = document.getElementById("modalBackdrop");
       if (show) {
@@ -2167,14 +3474,25 @@
     }
 
     async function updateCityView() {
+      const active = getActiveCity();
       await loadAirQuality();
       await loadWeatherData();
+      await fetchSolarEphemeris(active.lat, active.lon);
+      await updateIQAirWidget(active.lat, active.lon);
+      updateWindyWidget(active.lat, active.lon);
+      checkVolcanoHazards(active.lat, active.lon);
+      await Promise.all([
+        checkSeismicAndTsunami(active.lat, active.lon),
+        loadAtmosphericHazards(active.lat, active.lon)
+      ]);
       updateClock();
     }
 
     window.addEventListener("DOMContentLoaded", () => {
       renderPagination();
       updateCityView();
+      document.getElementById('mag-filter').addEventListener('change', filterAndRenderEq);
+      fetchEarthquakes();
     });
   </script>
 </body>
