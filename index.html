@@ -83,6 +83,44 @@
       transition: opacity 0.08s ease-out;
     }
 
+    /* Fullscreen Loading Overlay */
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(22, 33, 49, 0.85);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: opacity 0.35s ease;
+    }
+
+    .loading-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3.5px solid rgba(255, 255, 255, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-message {
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+      text-align: center;
+      padding: 0 20px;
+    }
+
     .ios-shell {
       position: relative;
       z-index: 2;
@@ -1089,6 +1127,12 @@
   </style>
 </head>
 <body>
+  <!-- Fullscreen Loading Indicator Overlay -->
+  <div id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-message">Please wait while we collect all the data.</div>
+  </div>
+
   <canvas id="weatherCanvas"></canvas>
   <div id="lightningFlash"></div>
 
@@ -1251,10 +1295,10 @@
           </div>
         </div>
         <div>
-          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Historical Context</div>
+          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;" id="historicalContextTitle">Historical Mean For Today</div>
           <div style="font-size: 0.84rem; font-weight: 500;" id="unified-avg-summary">
-            <span id="unified-avg-badge" style="background: rgba(255, 255, 255, 0.15); padding: 1px 6px; border-radius: 4px; font-weight: 600;">+0°</span>
-            <span style="color: var(--text-secondary); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">vs avg 32°</span>
+            <span id="unified-avg-badge" style="background: rgba(251, 146, 60, 0.25); color: #fb923c; padding: 1px 6px; border-radius: 4px; font-weight: 600;">+0°</span>
+            <span style="color: var(--text-secondary); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">avg 32°</span>
           </div>
         </div>
       </div>
@@ -3276,7 +3320,8 @@
       badge.style.background = diff > 0 ? "rgba(251, 146, 60, 0.25)" : (diff < 0 ? "rgba(56, 189, 248, 0.25)" : "rgba(255, 255, 255, 0.15)");
       badge.style.color = diff > 0 ? "#fb923c" : (diff < 0 ? "#38bdf8" : "#ffffff");
       
-      // Display Historical Mean Temp cleanly without trailing brackets
+      // Update Title to "Historical Mean For Today" and show only avg temp without trailing brackets
+      document.getElementById("historicalContextTitle").innerText = "Historical Mean For Today";
       document.getElementById("unified-avg-baseline").innerHTML = `avg ${avgBaseline}°`;
 
       const roundWind = Math.round(windSpeedKmh);
@@ -4305,9 +4350,12 @@
     }
 
     async function updateCityView() {
+      const overlay = document.getElementById("loadingOverlay");
+      if (overlay) overlay.style.opacity = "1";
+      overlay.style.pointerEvents = "auto";
+
       const active = getActiveCity();
 
-      // Dynamically fetch and update the historical climate normal for this location using archive daily mean temperatures
       active.baselineAvg = await fetchHistoricalBaselineAvg(active.lat, active.lon, active.timezone || "auto");
 
       await fetchSolarEphemeris(active.lat, active.lon);
@@ -4321,6 +4369,13 @@
         loadAtmosphericHazards(active.lat, active.lon)
       ]);
       updateClock();
+
+      if (overlay) {
+        overlay.style.opacity = "0";
+        setTimeout(() => {
+          overlay.style.pointerEvents = "none";
+        }, 350);
+      }
     }
 
     window.addEventListener("DOMContentLoaded", () => {
