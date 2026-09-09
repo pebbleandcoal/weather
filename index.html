@@ -449,114 +449,6 @@
     .today-period-row .lbl { color: var(--text-muted); }
     .today-period-row .val { font-weight: 600; color: #ffffff; }
 
-    /* 3-Day Segmented Outlook Widget (Matches card width, 4 rows per column) */
-    .forecast-card-tri {
-      width: 100%;
-      background: var(--card-bg);
-      backdrop-filter: blur(35px) saturate(170%);
-      -webkit-backdrop-filter: blur(35px) saturate(170%);
-      border: 1px solid var(--card-border);
-      border-radius: var(--card-radius);
-      padding: 10px 8px;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
-      color: #ffffff;
-    }
-
-    .tri-title {
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 6px;
-      padding-left: 2px;
-    }
-
-    .columns-track-tri {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
-      overflow-x: visible;
-    }
-
-    .day-column-tri {
-      min-width: unset;
-      width: 100%;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 6px 3px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .day-name-tri {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    .day-date-tri {
-      font-size: 0.54rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-top: 1px;
-      margin-bottom: 5px;
-    }
-
-    .period-stack-tri {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      width: 100%;
-    }
-
-    .period-cell-tri {
-      background: rgba(0, 0, 0, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 8px;
-      padding: 3px 2px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .period-info-tri {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      text-align: right;
-    }
-
-    .period-label-tri {
-      font-size: 0.44rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      line-height: 1;
-    }
-
-    .period-temp-tri {
-      font-size: 0.84rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      margin-top: 1px;
-    }
-
-    .period-meta-tri {
-      font-size: 0.48rem;
-      color: rgba(255, 255, 255, 0.72);
-      font-weight: 500;
-      margin-top: 1px;
-      white-space: nowrap;
-    }
-
     /* 3D Icons & Subtle Animations */
     .icon-box-tri {
       width: 24px;
@@ -1035,7 +927,7 @@
       background: rgba(255, 255, 255, 0.12);
       border: none;
       color: #ffffff;
-      font-size: 0.8rem;
+      font-size: 0.80rem;
       font-weight: 600;
       padding: 5px 12px;
       border-radius: 99px;
@@ -1251,10 +1143,10 @@
           </div>
         </div>
         <div>
-          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Historical Context</div>
+          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;" id="historicalContextTitle">Historical Mean For Today</div>
           <div style="font-size: 0.84rem; font-weight: 500;" id="unified-avg-summary">
-            <span id="unified-avg-badge" style="background: rgba(255, 255, 255, 0.15); padding: 1px 6px; border-radius: 4px; font-weight: 600;">+0°</span>
-            <span style="color: var(--text-secondary); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">vs avg 32°</span>
+            <span id="unified-avg-badge" style="background: rgba(251, 146, 60, 0.25); color: #fb923c; padding: 1px 6px; border-radius: 4px; font-weight: 600;">+0°</span>
+            <span style="color: var(--text-secondary); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">avg 32°</span>
           </div>
         </div>
       </div>
@@ -1607,7 +1499,7 @@
     <div class="weather-card satellite-card">
       <div class="satellite-header">
         <div class="card-title" style="margin-bottom: 0;">
-          <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
           <span>WINDY GLOBAL RADAR</span>
         </div>
         <a id="windyExternalLink" href="https://www.windy.com/?13.3671,103.8448,5" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">
@@ -2062,48 +1954,46 @@
       }
     }
 
-    // Historical Climate Normals fetcher (Queries Open-Meteo Archive across 10 years)
+    // Historical Climate Normals fetcher (Queries Open-Meteo Archive across past 15 years for daily mean)
     async function fetchHistoricalBaselineAvg(lat, lon, timezone = "auto") {
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
+      const today = new Date();
+      const targetMonthDay = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const startYear = today.getFullYear() - 15;
+      const endYear = today.getFullYear() - 1;
 
-      const startYear = 2014;
-      const endYear = 2023;
-      const startDate = `${startYear}-${month}-${day}`;
-      const endDate = `${endYear}-${month}-${day}`;
-
-      const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max&timezone=${encodeURIComponent(timezone)}`;
+      const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startYear}-01-01&end_date=${endYear}-12-31&daily=temperature_2m_mean&timezone=${encodeURIComponent(timezone)}`;
 
       try {
         const res = await fetch(archiveUrl);
         if (!res.ok) throw new Error(`Archive API status ${res.status}`);
         const data = await res.json();
 
-        if (data.daily && data.daily.time && data.daily.temperature_2m_max) {
-          const targetDaySuffix = `-${month}-${day}`;
-          const dayTemps = [];
-
-          data.daily.time.forEach((dateStr, idx) => {
-            if (dateStr.endsWith(targetDaySuffix) && data.daily.temperature_2m_max[idx] !== null) {
-              dayTemps.push(data.daily.temperature_2m_max[idx]);
+        if (data.daily && data.daily.time && data.daily.temperature_2m_mean) {
+          const { time, temperature_2m_mean } = data.daily;
+          const matchingTemps = time.reduce((acc, date, i) => {
+            if (date.endsWith(`-${targetMonthDay}`) && temperature_2m_mean[i] !== null) {
+              acc.push(temperature_2m_mean[i]);
             }
-          });
+            return acc;
+          }, []);
 
-          if (dayTemps.length > 0) {
-            const sum = dayTemps.reduce((acc, t) => acc + t, 0);
-            return Math.round(sum / dayTemps.length);
+          if (matchingTemps.length > 0) {
+            const mean = matchingTemps.reduce((a, b) => a + b, 0) / matchingTemps.length;
+            return Math.round(mean);
           }
         }
       } catch (err) {
-        console.warn("Historical baseline fetch error, using latitude-based fallback:", err);
+        console.warn("Historical baseline fetch error, using fallback:", err);
       }
 
       // Fallback estimate based on latitude & season
       const absLat = Math.abs(lat);
-      if (absLat < 23.5) return 32;
-      if (absLat < 45) return now.getMonth() >= 4 && now.getMonth() <= 9 ? 25 : 12;
-      return now.getMonth() >= 4 && now.getMonth() <= 9 ? 19 : 2;
+      const currentMonth = today.getMonth() + 1;
+      const isSummer = currentMonth >= 5 && currentMonth <= 9;
+      if (absLat <= 15) return currentMonth >= 3 && currentMonth <= 5 ? 29 : 27;
+      if (absLat <= 30) return isSummer ? 27 : 17;
+      if (absLat <= 45) return currentMonth === 9 ? 20 : (isSummer ? 24 : 7);
+      return isSummer ? 15 : -2;
     }
 
     // --- Distance calculation utility ---
@@ -3277,7 +3167,10 @@
       badge.innerText = `${diff >= 0 ? '+' : ''}${diff}°`;
       badge.style.background = diff > 0 ? "rgba(251, 146, 60, 0.25)" : (diff < 0 ? "rgba(56, 189, 248, 0.25)" : "rgba(255, 255, 255, 0.15)");
       badge.style.color = diff > 0 ? "#fb923c" : (diff < 0 ? "#38bdf8" : "#ffffff");
-      document.getElementById("unified-avg-baseline").innerText = `${diff >= 0 ? 'above' : 'below'} avg (${avgBaseline}°)`;
+      
+      // Update Title to "Historical Mean For Today" and show only avg temp without trailing brackets
+      document.getElementById("historicalContextTitle").innerText = "Historical Mean For Today";
+      document.getElementById("unified-avg-baseline").innerHTML = `avg ${avgBaseline}°`;
 
       const roundWind = Math.round(windSpeedKmh);
       const windPct = Math.min(100, Math.max(8, Math.round((roundWind / 50) * 100)));
@@ -3322,7 +3215,6 @@
       document.getElementById("bar-prob").style.background = probColor;
       document.getElementById("bar-prob").style.width = `${Math.max(rainProb > 0 ? 8 : 2, rainProb)}%`;
 
-      // Update Daily Precipitation in Climate Stack
       const precipVal = parseFloat(dailyPrecipMm) || 0;
       const precipPct = Math.min(100, Math.max(precipVal > 0 ? 8 : 2, Math.round((precipVal / 30) * 100)));
       const precipColor = precipVal >= 25 ? "#f43f5e" : (precipVal >= 10 ? "#38bdf8" : "#0284c7");
@@ -3340,9 +3232,7 @@
         barPrecip.style.width = `${precipPct}%`;
       }
 
-      // Render accurate day/night 3D animated icon
       renderClimate3DIcon(weatherCode, rainMm);
-
       processBioclimaticMetrics(roundCur, Math.round(humidity));
     }
 
@@ -4310,7 +4200,7 @@
     async function updateCityView() {
       const active = getActiveCity();
 
-      // Dynamically fetch and update the historical climate normal for this location
+      // Dynamically fetch and update the historical climate normal for this location using archive daily mean temperatures
       active.baselineAvg = await fetchHistoricalBaselineAvg(active.lat, active.lon, active.timezone || "auto");
 
       await fetchSolarEphemeris(active.lat, active.lon);
