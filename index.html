@@ -449,6 +449,114 @@
     .today-period-row .lbl { color: var(--text-muted); }
     .today-period-row .val { font-weight: 600; color: #ffffff; }
 
+    /* 3-Day Segmented Outlook Widget (Matches card width, 4 rows per column) */
+    .forecast-card-tri {
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(35px) saturate(170%);
+      -webkit-backdrop-filter: blur(35px) saturate(170%);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      padding: 10px 8px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+      color: #ffffff;
+    }
+
+    .tri-title {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 6px;
+      padding-left: 2px;
+    }
+
+    .columns-track-tri {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      overflow-x: visible;
+    }
+
+    .day-column-tri {
+      min-width: unset;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 6px 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .day-name-tri {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .day-date-tri {
+      font-size: 0.54rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 1px;
+      margin-bottom: 5px;
+    }
+
+    .period-stack-tri {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .period-cell-tri {
+      background: rgba(0, 0, 0, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 3px 2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .period-info-tri {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .period-label-tri {
+      font-size: 0.44rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      line-height: 1;
+    }
+
+    .period-temp-tri {
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-top: 1px;
+    }
+
+    .period-meta-tri {
+      font-size: 0.48rem;
+      color: rgba(255, 255, 255, 0.72);
+      font-weight: 500;
+      margin-top: 1px;
+      white-space: nowrap;
+    }
+
     /* 3D Icons & Subtle Animations */
     .icon-box-tri {
       width: 24px;
@@ -1143,10 +1251,10 @@
           </div>
         </div>
         <div>
-          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;" id="historicalContextTitle">Historical Mean For Today</div>
+          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Historical Context</div>
           <div style="font-size: 0.84rem; font-weight: 500;" id="unified-avg-summary">
-            <span id="unified-avg-badge" style="background: rgba(251, 146, 60, 0.25); color: #fb923c; padding: 1px 6px; border-radius: 4px; font-weight: 600;">+0°</span>
-            <span style="color: var(--text-secondary); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">avg 32°</span>
+            <span id="unified-avg-badge" style="background: rgba(255, 255, 255, 0.15); padding: 1px 6px; border-radius: 4px; font-weight: 600;">+0°</span>
+            <span style="color: var(--text-secondary); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">vs avg 32°</span>
           </div>
         </div>
       </div>
@@ -3168,8 +3276,7 @@
       badge.style.background = diff > 0 ? "rgba(251, 146, 60, 0.25)" : (diff < 0 ? "rgba(56, 189, 248, 0.25)" : "rgba(255, 255, 255, 0.15)");
       badge.style.color = diff > 0 ? "#fb923c" : (diff < 0 ? "#38bdf8" : "#ffffff");
       
-      // Update Title to "Historical Mean For Today" and show only avg temp without trailing brackets
-      document.getElementById("historicalContextTitle").innerText = "Historical Mean For Today";
+      // Display Historical Mean Temp cleanly without trailing brackets
       document.getElementById("unified-avg-baseline").innerHTML = `avg ${avgBaseline}°`;
 
       const roundWind = Math.round(windSpeedKmh);
