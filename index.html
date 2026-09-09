@@ -2364,7 +2364,8 @@
         fireVal.style.color = "var(--accent-green)";
         fireBar.style.width = "15%";
         fireBar.style.background = "var(--accent-green)";
-        fireSub.textContent = `No active wildfire hotspots in immediate 50 km zone. Ambient relative humidity (${humidity}%) prevents spontaneous flare-ups.`;
+        subEl = document.getElementById("fireSub");
+        if (subEl) subEl.textContent = `No active wildfire hotspots in immediate 50 km zone. Ambient relative humidity (${humidity}%) prevents spontaneous flare-ups.`;
       }
     }
 
@@ -2976,6 +2977,9 @@
     function goToCity(newIndex, direction = null) {
       if (newIndex < 0 || newIndex >= cities.length || newIndex === currentCityIndex) return;
 
+      // Always return to the top of the page when changing location
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       const shell = document.getElementById("weatherShell");
       const dir = direction || (newIndex > currentCityIndex ? "left" : "right");
 
@@ -2994,39 +2998,6 @@
         }, 220);
       }, 200);
     }
-
-    function nextCity() {
-      if (currentCityIndex < cities.length - 1) goToCity(currentCityIndex + 1, "left");
-    }
-
-    function prevCity() {
-      if (currentCityIndex > 0) goToCity(currentCityIndex - 1, "right");
-    }
-
-    let touchStartX = 0;
-    let touchStartY = 0;
-
-    window.addEventListener("touchstart", (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
-    }, { passive: true });
-
-    window.addEventListener("touchend", (e) => {
-      const touchEndX = e.changedTouches[0].screenX;
-      const touchEndY = e.changedTouches[0].screenY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-
-      if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
-        if (deltaX < 0) nextCity();
-        else prevCity();
-      }
-    }, { passive: true });
-
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowRight") nextCity();
-      if (e.key === "ArrowLeft") prevCity();
-    });
 
     function getTimeDiffString(targetTimezone) {
       try {
