@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Weather Station</title>
   
   <!-- Apple Touch Icons & Web App Capability for iOS Home Screen -->
@@ -58,7 +58,7 @@
       color: var(--text-primary);
       display: flex;
       justify-content: center;
-      padding: 22px 14px 115px 14px;
+      padding: 16px 10px 115px 10px;
       position: relative;
       overflow-x: hidden;
       touch-action: pan-y;
@@ -87,10 +87,10 @@
       position: relative;
       z-index: 2;
       width: 100%;
-      max-width: 500px;
+      max-width: 390px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       transition: opacity 0.22s ease, transform 0.22s ease;
     }
 
@@ -102,15 +102,15 @@
     /* Header */
     .ios-header {
       text-align: center;
-      padding: 4px 0 12px 0;
+      padding: 2px 0 8px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
     .weather-anim-container {
-      width: 76px;
-      height: 62px;
+      width: 64px;
+      height: 52px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -118,7 +118,7 @@
     }
 
     .header-location-tag {
-      font-size: 0.76rem;
+      font-size: 0.7rem;
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -127,26 +127,26 @@
     }
 
     .header-city {
-      font-size: 2.3rem;
+      font-size: 2rem;
       font-weight: 400;
       letter-spacing: -0.01em;
       line-height: 1.15;
     }
 
     .header-date-line {
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 500;
       color: var(--text-primary);
-      margin-top: 4px;
+      margin-top: 2px;
       letter-spacing: -0.01em;
     }
 
     .header-time-large {
-      font-size: 3.2rem;
+      font-size: 2.8rem;
       font-weight: 300;
       letter-spacing: -0.03em;
       line-height: 1.05;
-      margin-top: 4px;
+      margin-top: 2px;
       color: #ffffff;
       display: flex;
       align-items: baseline;
@@ -155,7 +155,7 @@
     }
 
     .header-time-diff {
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 400;
       opacity: 0.75;
       vertical-align: baseline;
@@ -168,7 +168,7 @@
       -webkit-backdrop-filter: blur(35px) saturate(170%);
       border: 1px solid var(--card-border);
       border-radius: var(--card-radius);
-      padding: 16px;
+      padding: 12px 10px;
       position: relative;
       box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
       display: flex;
@@ -177,35 +177,35 @@
     }
 
     .card-title {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
+      gap: 5px;
+      margin-bottom: 4px;
     }
 
     .card-title svg {
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       fill: currentColor;
       opacity: 0.85;
       flex-shrink: 0;
     }
 
     .card-large-val {
-      font-size: 2.25rem;
+      font-size: 2rem;
       font-weight: 400;
       letter-spacing: -0.02em;
       line-height: 1.1;
-      margin: 4px 0 2px 0;
+      margin: 3px 0 2px 0;
     }
 
     .card-subtext {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       line-height: 1.35;
       color: var(--text-primary);
       margin-top: auto;
@@ -220,8 +220,8 @@
       background: rgba(239, 68, 68, 0.28);
       border: 1px solid rgba(239, 68, 68, 0.45);
       border-radius: var(--card-radius);
-      padding: 14px 16px;
-      font-size: 0.88rem;
+      padding: 12px 14px;
+      font-size: 0.84rem;
       font-weight: 500;
       align-items: center;
       gap: 10px;
@@ -230,64 +230,64 @@
     .grid-2col {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
     }
 
     .section-label {
-      font-size: 0.74rem;
+      font-size: 0.7rem;
       font-weight: 600;
       letter-spacing: 0.07em;
       text-transform: uppercase;
       color: var(--text-muted);
-      margin: 14px 0 2px 4px;
+      margin: 12px 0 2px 4px;
     }
 
     /* Climate Metric Bars Stack */
     .climate-bars-stack {
       display: flex;
       flex-direction: column;
-      gap: 9px;
-      margin: 10px 0 12px 0;
+      gap: 7px;
+      margin: 8px 0 10px 0;
     }
 
     .climate-metric-item {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 8px 12px;
+      border-radius: 10px;
+      padding: 6px 10px;
     }
 
     .climate-metric-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .climate-metric-left {
       display: flex;
       align-items: center;
-      gap: 7px;
-      font-size: 0.82rem;
+      gap: 6px;
+      font-size: 0.78rem;
       font-weight: 600;
     }
 
     .climate-dot {
-      width: 7.5px;
-      height: 7.5px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
     .climate-metric-right {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
       color: var(--text-secondary);
     }
 
     .ios-progress-track {
       width: 100%;
-      height: 4px;
+      height: 3.5px;
       background: rgba(255, 255, 255, 0.12);
       border-radius: 99px;
       overflow: hidden;
@@ -304,11 +304,11 @@
     .metric-row {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 16px;
-      padding: 14px 16px;
+      border-radius: 14px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       transition: background 0.2s ease, border-color 0.2s ease;
     }
 
@@ -325,7 +325,7 @@
     }
 
     .metric-tag {
-      font-size: 0.74rem;
+      font-size: 0.7rem;
       font-weight: 600;
       letter-spacing: 0.05em;
       text-transform: uppercase;
@@ -336,21 +336,21 @@
     }
 
     .metric-val {
-      font-size: 1.05rem;
+      font-size: 0.98rem;
       font-weight: 700;
       letter-spacing: -0.01em;
       color: #ffffff;
     }
 
     .metric-sub {
-      font-size: 0.8rem;
+      font-size: 0.76rem;
       line-height: 1.35;
       color: rgba(255, 255, 255, 0.72);
     }
 
     .progress-track {
       width: 100%;
-      height: 4px;
+      height: 3.5px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 99px;
       overflow: hidden;
@@ -371,7 +371,7 @@
       padding: 2px;
       border-radius: 99px;
       gap: 2px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -384,9 +384,9 @@
       background: transparent;
       border: none;
       color: var(--text-secondary);
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 500;
-      padding: 6px 10px;
+      padding: 5px 8px;
       border-radius: 99px;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -400,16 +400,16 @@
 
     canvas.chart-canvas {
       width: 100% !important;
-      max-height: 180px;
+      max-height: 160px;
     }
 
-    /* --- Today 4-Period Hourly Track (2x2 Grid for Perfect Fit) --- */
+    /* --- Today 4-Period Hourly Track (2x2 Grid for iPhone 13 Fit) --- */
     .today-periods-track {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
+      gap: 6px;
       overflow-x: visible;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .today-period-card {
@@ -417,15 +417,15 @@
       width: 100%;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 10px 8px;
+      border-radius: 14px;
+      padding: 8px 6px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
     .today-period-label {
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
@@ -434,7 +434,7 @@
     }
 
     .today-period-temp {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 700;
       margin: 4px 0;
     }
@@ -443,22 +443,22 @@
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding-top: 6px;
-      margin-top: 4px;
+      padding-top: 5px;
+      margin-top: 3px;
     }
 
     .today-period-row {
       display: flex;
       justify-content: space-between;
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       line-height: 1.2;
     }
     .today-period-row .lbl { color: var(--text-muted); }
     .today-period-row .val { font-weight: 600; color: #ffffff; }
 
-    /* --- 3-Day Segmented Tri-Period Forecast Widget Styles (3 Columns Static Fit) --- */
+    /* --- 3-Day Segmented Tri-Period Forecast Widget Styles (Same width as other widgets) --- */
     .forecast-card-tri {
       width: 100%;
       background: var(--card-bg);
@@ -466,22 +466,22 @@
       -webkit-backdrop-filter: blur(35px) saturate(170%);
       border: 1px solid var(--card-border);
       border-radius: var(--card-radius);
-      padding: 16px 12px;
+      padding: 12px 10px;
       box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
       color: #ffffff;
     }
 
     .tri-title {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 12px;
-      padding-left: 4px;
+      gap: 5px;
+      margin-bottom: 8px;
+      padding-left: 2px;
     }
 
     .columns-track-tri {
@@ -496,39 +496,39 @@
       width: 100%;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 18px;
-      padding: 10px 4px;
+      border-radius: 12px;
+      padding: 8px 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
     .day-name-tri {
-      font-size: 0.8rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
     }
 
     .day-date-tri {
-      font-size: 0.62rem;
+      font-size: 0.56rem;
       color: var(--text-muted);
       text-transform: uppercase;
-      margin-top: 2px;
-      margin-bottom: 8px;
+      margin-top: 1px;
+      margin-bottom: 6px;
     }
 
     .period-stack-tri {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       width: 100%;
     }
 
     .period-cell-tri {
       background: rgba(0, 0, 0, 0.16);
       border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      padding: 6px 4px;
+      border-radius: 8px;
+      padding: 5px 3px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -542,93 +542,103 @@
     }
 
     .period-label-tri {
-      font-size: 0.52rem;
+      font-size: 0.48rem;
       font-weight: 600;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.02em;
       text-transform: uppercase;
       color: var(--text-muted);
       line-height: 1;
     }
 
     .period-temp-tri {
-      font-size: 1rem;
+      font-size: 0.88rem;
       font-weight: 700;
       letter-spacing: -0.02em;
       line-height: 1.1;
-      margin-top: 2px;
+      margin-top: 1px;
     }
 
     .period-meta-tri {
-      font-size: 0.58rem;
+      font-size: 0.52rem;
       color: rgba(255, 255, 255, 0.72);
       font-weight: 500;
-      margin-top: 2px;
+      margin-top: 1px;
       white-space: nowrap;
     }
 
     /* 3D Icons */
     .icon-box-tri {
-      width: 32px;
-      height: 30px;
+      width: 28px;
+      height: 26px;
       position: relative;
       flex-shrink: 0;
     }
 
+    .icon-box-large {
+      width: 36px;
+      height: 32px;
+      position: relative;
+      flex-shrink: 0;
+      transform: scale(1.1);
+      transform-origin: center;
+      margin: 2px 0;
+    }
+
     .sun-3d {
       position: absolute;
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       background: radial-gradient(circle at 30% 30%, #ffeb55 0%, #f59e0b 80%);
-      box-shadow: 0 3px 8px rgba(245, 158, 11, 0.45);
-      top: 2px;
-      right: 2px;
+      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.45);
+      top: 1px;
+      right: 1px;
       z-index: 1;
     }
 
     .moon-3d {
       position: absolute;
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       background: radial-gradient(circle at 35% 30%, #fef08a 0%, #eab308 85%);
-      box-shadow: 0 0 8px rgba(254, 240, 138, 0.5);
-      top: 3px;
-      right: 3px;
+      box-shadow: 0 0 6px rgba(254, 240, 138, 0.5);
+      top: 2px;
+      right: 2px;
       z-index: 1;
     }
 
     .cloud-3d {
       position: absolute;
-      width: 26px;
-      height: 12px;
+      width: 22px;
+      height: 10px;
       background: linear-gradient(180deg, #ffffff 0%, #dbe2ef 100%);
-      border-radius: 10px;
-      bottom: 4px;
+      border-radius: 8px;
+      bottom: 3px;
       left: 1px;
       z-index: 2;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18), inset -1px -2px 3px rgba(150, 160, 200, 0.35);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18), inset -1px -2px 3px rgba(150, 160, 200, 0.35);
     }
     .cloud-3d::before {
       content: '';
       position: absolute;
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       background: linear-gradient(180deg, #ffffff 0%, #e8ecf5 100%);
       border-radius: 50%;
-      top: -6px;
-      left: 3px;
-      box-shadow: inset 1.5px 1.5px 3px rgba(255, 255, 255, 0.9);
+      top: -5px;
+      left: 2px;
+      box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.9);
     }
     .cloud-3d::after {
       content: '';
       position: absolute;
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       background: linear-gradient(180deg, #ffffff 0%, #dbe2ef 100%);
       border-radius: 50%;
-      top: -3px;
-      right: 2px;
+      top: -2px;
+      right: 1px;
     }
 
     .cloud-storm {
@@ -643,34 +653,34 @@
 
     .lightning-3d {
       position: absolute;
-      width: 6px;
-      height: 10px;
+      width: 5px;
+      height: 8px;
       background: #facc15;
       clip-path: polygon(100% 0, 0 55%, 40% 55%, 0 100%, 100% 35%, 60% 35%);
       bottom: 0px;
-      left: 11px;
+      left: 9px;
       z-index: 3;
-      filter: drop-shadow(0 2px 3px rgba(250, 204, 21, 0.7));
+      filter: drop-shadow(0 1px 2px rgba(250, 204, 21, 0.7));
     }
 
     .rain-drop {
       position: absolute;
-      width: 2px;
-      height: 4px;
+      width: 1.5px;
+      height: 3.5px;
       background: #38bdf8;
       border-radius: 2px;
       bottom: 0px;
       z-index: 1;
     }
-    .r1 { left: 6px; }
-    .r2 { left: 12px; bottom: -2px; }
-    .r3 { left: 18px; }
+    .r1 { left: 5px; }
+    .r2 { left: 10px; bottom: -2px; }
+    .r3 { left: 15px; }
 
     /* Satellite & Radar Map Widget */
-    .satellite-card { padding: 14px; overflow: hidden; }
-    .satellite-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .satellite-card { padding: 12px; overflow: hidden; }
+    .satellite-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .satellite-link-btn {
-      font-size: 0.74rem;
+      font-size: 0.7rem;
       color: #38bdf8;
       text-decoration: none;
       font-weight: 500;
@@ -680,8 +690,8 @@
     }
     .satellite-map-wrapper {
       width: 100%;
-      height: 250px;
-      border-radius: 14px;
+      height: 220px;
+      border-radius: 12px;
       overflow: hidden;
       position: relative;
       background: #111a28;
@@ -697,40 +707,40 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      margin: 4px 0 2px 0;
+      margin: 3px 0 2px 0;
     }
-    .pressure-dial-svg { width: 135px; height: 105px; overflow: visible; }
+    .pressure-dial-svg { width: 120px; height: 95px; overflow: visible; }
     .pressure-ticks-label-row {
       width: 100%;
       display: flex;
       justify-content: space-between;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: var(--text-secondary);
-      padding: 0 10px;
+      padding: 0 8px;
       margin-top: -6px;
     }
 
     /* Wind Widget with Compass */
-    .wind-body { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 4px; }
-    .wind-stats { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .wind-body { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 3px; }
+    .wind-stats { display: flex; flex-direction: column; gap: 6px; flex: 1; }
     .wind-row {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      font-size: 0.88rem;
-      padding-bottom: 4px;
+      font-size: 0.84rem;
+      padding-bottom: 3px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     .wind-row:last-child { border-bottom: none; }
     .wind-label { color: var(--text-secondary); font-weight: 400; }
     .wind-value { font-weight: 500; }
-    .compass-container { width: 110px; height: 110px; position: relative; flex-shrink: 0; }
+    .compass-container { width: 100px; height: 100px; position: relative; flex-shrink: 0; }
     .compass-dial { width: 100%; height: 100%; }
-    .compass-needle { transform-origin: 55px 55px; transition: transform 0.6s ease-out; }
+    .compass-needle { transform-origin: 50px 50px; transition: transform 0.6s ease-out; }
 
     /* Sun Transit Widget */
     .sun-status-desc {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: var(--text-secondary);
       margin-top: 2px;
       font-weight: 500;
@@ -738,8 +748,8 @@
     .sun-arc-container {
       position: relative;
       width: 100%;
-      height: 125px;
-      margin-top: 6px;
+      height: 110px;
+      margin-top: 4px;
     }
     .sun-arc-svg {
       width: 100%;
@@ -754,7 +764,7 @@
     .sun-time-labels {
       display: flex;
       justify-content: space-between;
-      margin-top: 6px;
+      margin-top: 4px;
       padding: 0 4px;
     }
     .sun-time-block {
@@ -765,16 +775,16 @@
       text-align: right;
     }
     .sun-time-tag {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 600;
       text-transform: uppercase;
       color: var(--text-muted);
       letter-spacing: 0.05em;
     }
     .sun-time-val {
-      font-size: 1.05rem;
+      font-size: 0.98rem;
       font-weight: 600;
-      margin-top: 2px;
+      margin-top: 1px;
       color: #ffffff;
     }
 
@@ -783,33 +793,33 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 12px 0 16px 0;
+      margin: 10px 0 12px 0;
     }
     .canvas-wrapper {
       position: relative;
-      width: 170px;
-      height: 170px;
-      margin-bottom: 12px;
+      width: 150px;
+      height: 150px;
+      margin-bottom: 10px;
       border-radius: 50%;
-      box-shadow: 0 0 25px var(--moon-glow);
+      box-shadow: 0 0 20px var(--moon-glow);
     }
     #moon-canvas {
       display: block;
       border-radius: 50%;
     }
     .moon-phase-name {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 600;
     }
     .meta-badges {
       display: flex;
-      gap: 8px;
-      margin-top: 8px;
+      gap: 6px;
+      margin-top: 6px;
     }
     .badge {
-      font-size: 0.76rem;
-      padding: 3px 10px;
-      border-radius: 12px;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 10px;
       font-weight: 500;
       border: 1px solid var(--card-border);
     }
@@ -824,47 +834,47 @@
     .moon-details-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 4px;
+      gap: 8px;
+      margin-top: 2px;
     }
     .moon-detail-card {
       background: rgba(10, 16, 30, 0.45);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 10px;
+      border-radius: 10px;
+      padding: 8px;
       text-align: center;
     }
     .moon-detail-card .label {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
     .moon-detail-card .value {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
     }
     .moon-detail-card .subtext {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       color: var(--accent);
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     /* Floating Dock (Navigation) */
     .ios-dock {
       position: fixed;
-      bottom: 16px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
-      width: calc(100% - 32px);
-      max-width: 480px;
+      width: calc(100% - 24px);
+      max-width: 390px;
       background: rgba(26, 38, 54, 0.78);
       backdrop-filter: blur(30px) saturate(180%);
       -webkit-backdrop-filter: blur(30px) saturate(180%);
       border: 1px solid rgba(255, 255, 255, 0.16);
       border-radius: 99px;
-      padding: 10px 16px;
+      padding: 8px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -879,8 +889,8 @@
       justify-content: center;
       color: #ffffff;
       opacity: 0.95;
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       flex-shrink: 0;
       position: relative;
       z-index: 2;
@@ -890,11 +900,11 @@
     .dock-pagination {
       flex: 1;
       min-width: 0;
-      margin: 0 10px;
+      margin: 0 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
       user-select: none;
       overflow-x: auto;
       scrollbar-width: none;
@@ -912,14 +922,14 @@
       flex-shrink: 0;
     }
     .dock-dot {
-      width: 6.5px;
-      height: 6.5px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.35);
       transition: all 0.25s ease;
     }
     .dock-bullet-item.active .dock-dot { background: #ffffff; transform: scale(1.35); }
-    .dock-location-arrow { width: 11px; height: 11px; fill: rgba(255, 255, 255, 0.45); }
+    .dock-location-arrow { width: 10px; height: 10px; fill: rgba(255, 255, 255, 0.45); }
     .dock-bullet-item.active .dock-location-arrow { fill: #ffffff; }
 
     /* Modal Sheet */
@@ -941,11 +951,11 @@
       bottom: 0;
       transform: translate(-50%, 100%);
       width: 100%;
-      max-width: 500px;
+      max-width: 390px;
       background: rgba(22, 33, 49, 0.95);
       border-radius: 28px 28px 0 0;
       border: 1px solid var(--card-border);
-      padding: 18px 20px 32px 20px;
+      padding: 16px 18px 28px 18px;
       z-index: 1002;
       transition: transform 0.34s cubic-bezier(0.18, 0.89, 0.32, 1.15);
       box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
@@ -954,28 +964,28 @@
       max-height: 85vh;
     }
     .modal-backdrop.open .city-modal { transform: translate(-50%, 0%); }
-    .modal-drag-bar { width: 38px; height: 4.5px; background: rgba(255, 255, 255, 0.3); border-radius: 99px; margin: 0 auto 14px auto; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .modal-title { font-size: 1.2rem; font-weight: 600; }
+    .modal-drag-bar { width: 36px; height: 4px; background: rgba(255, 255, 255, 0.3); border-radius: 99px; margin: 0 auto 12px auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .modal-title { font-size: 1.1rem; font-weight: 600; }
     .modal-close-btn {
       background: rgba(255, 255, 255, 0.12);
       border: none;
       color: #ffffff;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      padding: 6px 14px;
+      padding: 5px 12px;
       border-radius: 99px;
       cursor: pointer;
     }
 
-    .search-box-wrapper { position: relative; margin-bottom: 14px; }
+    .search-box-wrapper { position: relative; margin-bottom: 12px; }
     .search-input {
       width: 100%;
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
-      padding: 10px 14px 10px 38px;
-      font-size: 0.92rem;
+      border-radius: 10px;
+      padding: 9px 12px 9px 36px;
+      font-size: 0.88rem;
       color: #ffffff;
       outline: none;
       font-family: var(--font-stack);
@@ -988,30 +998,30 @@
     .search-input::placeholder { color: rgba(255, 255, 255, 0.45); }
     .search-icon-inside {
       position: absolute;
-      left: 12px;
+      left: 11px;
       top: 50%;
       transform: translateY(-50%);
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       fill: rgba(255, 255, 255, 0.45);
       pointer-events: none;
     }
-    .search-results-list, .saved-cities-list { list-style: none; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .search-results-list, .saved-cities-list { list-style: none; overflow-y: auto; display: flex; flex-direction: column; gap: 7px; }
     .city-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 12px 14px;
+      border-radius: 12px;
+      padding: 10px 12px;
       cursor: pointer;
     }
     .city-item-left { display: flex; flex-direction: column; gap: 2px; }
-    .city-item-name { font-size: 1rem; font-weight: 600; }
-    .city-item-country { font-size: 0.78rem; color: var(--text-secondary); }
-    .city-remove-btn { background: transparent; border: none; color: #f87171; padding: 4px; font-size: 1.1rem; cursor: pointer; }
-    .search-tag { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 8px 0 4px 4px; }
+    .city-item-name { font-size: 0.95rem; font-weight: 600; }
+    .city-item-country { font-size: 0.74rem; color: var(--text-secondary); }
+    .city-remove-btn { background: transparent; border: none; color: #f87171; padding: 4px; font-size: 1rem; cursor: pointer; }
+    .search-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 6px 0 3px 4px; }
 
     /* Animations */
     @keyframes sunSpin {
@@ -1064,7 +1074,7 @@
     </header>
 
     <div id="rainAlertBanner" class="alert-card">
-      <span style="font-size: 1.15rem;">⚠️</span>
+      <span style="font-size: 1.1rem;">⚠️</span>
       <span id="rainAlertMessage">Precipitation Alert</span>
     </div>
 
@@ -1075,38 +1085,45 @@
         <span>WEATHER SUMMARY</span>
       </div>
       
-      <div style="color: #38bdf8; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; margin: 8px 0 4px 0;">NEXT HOUR OUTLOOK</div>
-      <div class="card-subtext" id="narrative-text" style="font-size: 0.95rem; font-weight: 500;">
+      <div style="color: #38bdf8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; margin: 6px 0 3px 0;">NEXT HOUR OUTLOOK</div>
+      <div class="card-subtext" id="narrative-text" style="font-size: 0.9rem; font-weight: 500;">
         Connecting live atmospheric sensors...
       </div>
       
-      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0;">
+      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0;">
       
-      <div style="color: #38bdf8; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 4px 0;">24-HOUR OUTLOOK</div>
-      <div class="card-subtext" id="narrative-daily-text" style="font-size: 0.95rem; font-weight: 500;">
+      <div style="color: #38bdf8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 3px 0;">24-HOUR OUTLOOK</div>
+      <div class="card-subtext" id="narrative-daily-text" style="font-size: 0.9rem; font-weight: 500;">
         Generating diurnal meteorological model...
       </div>
     </div>
 
-    <!-- Climate Card with Integrated Air Quality -->
+    <!-- Climate Card with Integrated Air Quality, Current Wind Data & 3D Icon -->
     <div class="weather-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 0-4 4v7.3a6 6 0 1 0 8 0V6a4 4 0 0 0-4-4zm0 18a4 4 0 0 1-2.4-7.2l.4-.3V6a2 2 0 1 1 4 0v6.5l.4.3A4 4 0 0 1 12 20z"/></svg>
         <span>CLIMATE</span>
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin: 4px 0 6px 0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0 8px 0;">
         <div>
-          <div style="font-size: 3.2rem; font-weight: 400; line-height: 1; letter-spacing: -0.03em;" id="unified-cur-temp">--°</div>
-          <div style="font-size: 0.95rem; color: var(--text-secondary); margin-top: 4px;" id="unified-condition">Loading...</div>
+          <div style="font-size: 2.8rem; font-weight: 400; line-height: 1; letter-spacing: -0.03em;" id="unified-cur-temp">--°</div>
+          <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 3px;" id="unified-condition">Loading...</div>
         </div>
+
+        <!-- Added 3D Icon Box in Climate Card -->
+        <div class="icon-box-large" id="climate-3d-icon-box" style="transform: scale(1.35); margin-right: 12px;">
+          <div class="sun-3d"></div>
+          <div class="cloud-3d"></div>
+        </div>
+
         <div style="text-align: right;">
-          <div style="font-size: 1.65rem; font-weight: 500; color: #ffffff;" id="unified-feels">--°</div>
-          <div style="font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Feels Like</div>
+          <div style="font-size: 1.5rem; font-weight: 500; color: #ffffff;" id="unified-feels">--°</div>
+          <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Feels Like</div>
         </div>
       </div>
 
-      <div style="font-size: 0.84rem; color: var(--text-primary); margin: 4px 0 10px 0;" id="unified-humidity-impact">
+      <div style="font-size: 0.8rem; color: var(--text-primary); margin: 3px 0 8px 0;" id="unified-humidity-impact">
         Calculating atmospheric thermal index...
       </div>
 
@@ -1153,6 +1170,20 @@
           </div>
         </div>
 
+        <!-- Wind Speed Bar -->
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-wind" style="background: #93c5fd;"></span>
+              <span id="label-wind">Wind Speed</span>
+            </div>
+            <div class="climate-metric-right" id="metric-wind">-- km/h</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-wind" style="background: #93c5fd; width: 20%;"></div>
+          </div>
+        </div>
+
         <!-- Rain Probability Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
@@ -1168,25 +1199,25 @@
         </div>
       </div>
 
-      <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 10px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px;">
+      <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px;">
         <div>
-          <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Daily Range</div>
-          <div style="font-size: 0.92rem; font-weight: 600;">
+          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Daily Range</div>
+          <div style="font-size: 0.88rem; font-weight: 600;">
             <span id="unified-day-high" style="color: #ffffff;">H: --°</span>
             <span id="unified-day-low" style="color: var(--text-secondary); margin-left: 6px;">L: --°</span>
           </div>
         </div>
         <div>
-          <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Historical Context</div>
-          <div style="font-size: 0.88rem; font-weight: 500;" id="unified-avg-summary">
+          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Historical Context</div>
+          <div style="font-size: 0.84rem; font-weight: 500;" id="unified-avg-summary">
             <span id="unified-avg-badge" style="background: rgba(255, 255, 255, 0.15); padding: 1px 6px; border-radius: 4px; font-weight: 600;">+0°</span>
-            <span style="color: var(--text-secondary); font-size: 0.8rem; margin-left: 3px;" id="unified-avg-baseline">vs avg 32°</span>
+            <span style="color: var(--text-secondary); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">vs avg 32°</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 24-Hour Hourly Projection (Static 2x2 Grid Layout) -->
+    <!-- 24-Hour Hourly Projection (Static 2x2 Grid Layout with larger 3D icons & Hum / Wind in K/H) -->
     <div class="weather-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M3.5 18.5 9.5 12.5l4 4 6.5-6.5V14h2V6h-8v2h4.1l-4.6 4.6-4-4L2 17.1l1.5 1.4z"/></svg>
@@ -1198,15 +1229,15 @@
         <!-- Morning -->
         <div class="today-period-card">
           <span class="today-period-label">Morning</span>
-          <div class="icon-box-tri" id="today-icon-0">
+          <div class="icon-box-large" id="today-icon-0">
             <div class="sun-3d"></div>
             <div class="cloud-3d"></div>
           </div>
           <div class="today-period-temp" id="today-temp-0">--°</div>
           <div class="today-period-metrics">
-            <div class="today-period-row"><span class="lbl">Hum</span><span class="val" id="today-hum-0">--%</span></div>
+            <div class="today-period-row"><span class="lbl">Humidity</span><span class="val" id="today-hum-0">--%</span></div>
             <div class="today-period-row"><span class="lbl">UV</span><span class="val" id="today-uv-0">--</span></div>
-            <div class="today-period-row"><span class="lbl">Wind</span><span class="val" id="today-wind-0">--k</span></div>
+            <div class="today-period-row"><span class="lbl">Wind speed</span><span class="val" id="today-wind-0">-- K/H</span></div>
             <div class="today-period-row"><span class="lbl">Rain</span><span class="val" id="today-rain-0">--</span></div>
           </div>
         </div>
@@ -1214,15 +1245,15 @@
         <!-- Afternoon -->
         <div class="today-period-card">
           <span class="today-period-label">Afternoon</span>
-          <div class="icon-box-tri" id="today-icon-1">
+          <div class="icon-box-large" id="today-icon-1">
             <div class="cloud-3d cloud-storm"></div>
             <div class="lightning-3d"></div>
           </div>
           <div class="today-period-temp" id="today-temp-1">--°</div>
           <div class="today-period-metrics">
-            <div class="today-period-row"><span class="lbl">Hum</span><span class="val" id="today-hum-1">--%</span></div>
+            <div class="today-period-row"><span class="lbl">Humidity</span><span class="val" id="today-hum-1">--%</span></div>
             <div class="today-period-row"><span class="lbl">UV</span><span class="val" id="today-uv-1">--</span></div>
-            <div class="today-period-row"><span class="lbl">Wind</span><span class="val" id="today-wind-1">--k</span></div>
+            <div class="today-period-row"><span class="lbl">Wind speed</span><span class="val" id="today-wind-1">-- K/H</span></div>
             <div class="today-period-row"><span class="lbl">Rain</span><span class="val" id="today-rain-1">--</span></div>
           </div>
         </div>
@@ -1230,15 +1261,15 @@
         <!-- Evening -->
         <div class="today-period-card">
           <span class="today-period-label">Evening</span>
-          <div class="icon-box-tri" id="today-icon-2">
+          <div class="icon-box-large" id="today-icon-2">
             <div class="moon-3d"></div>
             <div class="cloud-3d"></div>
           </div>
           <div class="today-period-temp" id="today-temp-2">--°</div>
           <div class="today-period-metrics">
-            <div class="today-period-row"><span class="lbl">Hum</span><span class="val" id="today-hum-2">--%</span></div>
+            <div class="today-period-row"><span class="lbl">Humidity</span><span class="val" id="today-hum-2">--%</span></div>
             <div class="today-period-row"><span class="lbl">UV</span><span class="val" id="today-uv-2">--</span></div>
-            <div class="today-period-row"><span class="lbl">Wind</span><span class="val" id="today-wind-2">--k</span></div>
+            <div class="today-period-row"><span class="lbl">Wind speed</span><span class="val" id="today-wind-2">-- K/H</span></div>
             <div class="today-period-row"><span class="lbl">Rain</span><span class="val" id="today-rain-2">--</span></div>
           </div>
         </div>
@@ -1246,14 +1277,14 @@
         <!-- Night -->
         <div class="today-period-card">
           <span class="today-period-label">Night</span>
-          <div class="icon-box-tri" id="today-icon-3">
+          <div class="icon-box-large" id="today-icon-3">
             <div class="moon-3d"></div>
           </div>
           <div class="today-period-temp" id="today-temp-3">--°</div>
           <div class="today-period-metrics">
-            <div class="today-period-row"><span class="lbl">Hum</span><span class="val" id="today-hum-3">--%</span></div>
+            <div class="today-period-row"><span class="lbl">Humidity</span><span class="val" id="today-hum-3">--%</span></div>
             <div class="today-period-row"><span class="lbl">UV</span><span class="val" id="today-uv-3">--</span></div>
-            <div class="today-period-row"><span class="lbl">Wind</span><span class="val" id="today-wind-3">--k</span></div>
+            <div class="today-period-row"><span class="lbl">Wind speed</span><span class="val" id="today-wind-3">-- K/H</span></div>
             <div class="today-period-row"><span class="lbl">Rain</span><span class="val" id="today-rain-3">--</span></div>
           </div>
         </div>
@@ -1272,10 +1303,10 @@
       <canvas id="hourlyForecastChart" class="chart-canvas"></canvas>
     </div>
 
-    <!-- 3-Day Weather Tri-Period Forecast Widget (Static 3 Columns Grid Layout) -->
+    <!-- 3-Day Weather Tri-Period Forecast Widget (Width matched standard widgets) -->
     <div class="forecast-card-tri" id="forecast-3day-widget">
       <div class="tri-title">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
         <span>3-DAY SEGMENTED OUTLOOK</span>
       </div>
 
@@ -1440,13 +1471,13 @@
     <div class="section-label">Seismic Activity</div>
     <div class="weather-card" id="earthquake-card">
       <div class="card-title" style="justify-content: space-between; width: 100%; margin-bottom: 0;">
-        <div style="display: flex; align-items: center; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 5px;">
           <span>🌍</span>
           <span>EARTHQUAKES TODAY</span>
         </div>
         <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.2); padding: 3px 8px; border-radius: 6px;">
-          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">MAG ></span>
-          <select id="mag-filter" style="background: transparent; color: white; border: none; font-size: 0.75rem; font-weight: 700; outline: none; cursor: pointer; padding-left: 2px;">
+          <span style="font-size: 0.62rem; color: var(--text-muted); font-weight: 600;">MAG ></span>
+          <select id="mag-filter" style="background: transparent; color: white; border: none; font-size: 0.72rem; font-weight: 700; outline: none; cursor: pointer; padding-left: 2px;">
             <option value="1" style="color: black;">1</option>
             <option value="2" style="color: black;">2</option>
             <option value="3" style="color: black;">3</option>
@@ -1460,20 +1491,20 @@
         </div>
       </div>
 
-      <div id="earthquake-widget-body" style="margin-top: 12px;">
-        <div id="eq-loading" style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 10px 0;">
+      <div id="earthquake-widget-body" style="margin-top: 10px;">
+        <div id="eq-loading" style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 8px 0;">
            Fetching latest seismic data...
         </div>
-        <div id="eq-error" style="display: none; text-align: center; color: #f87171; font-size: 0.85rem; padding: 10px 0;">
+        <div id="eq-error" style="display: none; text-align: center; color: #f87171; font-size: 0.8rem; padding: 8px 0;">
            Failed to load earthquake data.
         </div>
-        <div id="eq-no-data" style="display: none; text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 10px 0;">
+        <div id="eq-no-data" style="display: none; text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 8px 0;">
            No earthquakes greater than this magnitude recorded today. 🎉
         </div>
-        <ul id="earthquake-list" style="display: none; list-style: none; max-height: 250px; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 10px;">
+        <ul id="earthquake-list" style="display: none; list-style: none; max-height: 220px; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 8px;">
         </ul>
       </div>
-      <div style="font-size: 0.7rem; color: var(--text-muted); display: flex; justify-content: space-between; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+      <div style="font-size: 0.65rem; color: var(--text-muted); display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">
         <span>Source: USGS API</span>
         <span id="eq-update-time"></span>
       </div>
@@ -1508,7 +1539,7 @@
           Open in Windy ↗
         </a>
       </div>
-      <div class="satellite-map-wrapper" style="height: 380px;">
+      <div class="satellite-map-wrapper" style="height: 340px;">
         <iframe id="windyIframe" width="100%" height="100%" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=5&overlay=wind&product=ecmwf&level=surface&lat=13.3671&lon=103.8448&detailLat=13.3671&detailLon=103.8448&pressure=true&message=true" frameborder="0"></iframe>
       </div>
     </div>
@@ -1520,11 +1551,11 @@
           <span>SOLAR (600W)</span>
         </div>
         <div class="card-large-val" id="solar-current-w">-- W</div>
-        <div style="font-weight: 500; font-size: 0.95rem;" id="solar-badge">--% of 600W</div>
-        <div class="ios-progress-track" style="margin-top: 8px;">
+        <div style="font-weight: 500; font-size: 0.9rem;" id="solar-badge">--% of 600W</div>
+        <div class="ios-progress-track" style="margin-top: 6px;">
           <div class="ios-progress-fill" id="solar-bar" style="background: #facc15;"></div>
         </div>
-        <div class="card-subtext card-subtext-muted" id="solar-est-daily" style="font-size: 0.74rem;">
+        <div class="card-subtext card-subtext-muted" id="solar-est-daily" style="font-size: 0.7rem;">
           Est. Today: ~-- Wh · GHI: -- W/m²
         </div>
       </div>
@@ -1550,9 +1581,9 @@
           <svg class="pressure-dial-svg" viewBox="0 0 135 105">
             <g id="pressureTicksGroup"></g>
             <g transform="translate(67.5, 60)">
-              <text x="0" y="-12" fill="#ffffff" font-size="16" font-weight="700" text-anchor="middle" id="pressureTrendArrow">↓</text>
-              <text x="0" y="8" fill="#ffffff" font-size="20" font-weight="500" letter-spacing="-0.02em" text-anchor="middle" id="pressureMainVal">1,006</text>
-              <text x="0" y="24" fill="rgba(255,255,255,0.72)" font-size="11" font-weight="500" text-anchor="middle">hPa</text>
+              <text x="0" y="-12" fill="#ffffff" font-size="15" font-weight="700" text-anchor="middle" id="pressureTrendArrow">↓</text>
+              <text x="0" y="8" fill="#ffffff" font-size="19" font-weight="500" letter-spacing="-0.02em" text-anchor="middle" id="pressureMainVal">1,006</text>
+              <text x="0" y="24" fill="rgba(255,255,255,0.72)" font-size="10.5" font-weight="500" text-anchor="middle">hPa</text>
             </g>
           </svg>
           <div class="pressure-ticks-label-row">
@@ -1594,19 +1625,19 @@
         </div>
 
         <div class="compass-container">
-          <svg class="compass-dial" viewBox="0 0 110 110">
-            <circle cx="55" cy="55" r="51" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="2.5, 4" />
-            <circle cx="55" cy="55" r="41" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-            <text x="55" y="15" fill="rgba(255,255,255,0.85)" font-size="9" font-weight="700" text-anchor="middle">N</text>
-            <text x="100" y="58" fill="rgba(255,255,255,0.7)" font-size="9" font-weight="700" text-anchor="middle">E</text>
-            <text x="55" y="103" fill="rgba(255,255,255,0.7)" font-size="9" font-weight="700" text-anchor="middle">S</text>
-            <text x="10" y="58" fill="rgba(255,255,255,0.7)" font-size="9" font-weight="700" text-anchor="middle">W</text>
-            <text x="55" y="53" fill="#ffffff" font-size="14" font-weight="600" text-anchor="middle" id="compass-speed-num">--</text>
-            <text x="55" y="65" fill="rgba(255,255,255,0.65)" font-size="8.5" font-weight="500" text-anchor="middle">km/h</text>
+          <svg class="compass-dial" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="2.5, 4" />
+            <circle cx="50" cy="50" r="37" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <text x="50" y="14" fill="rgba(255,255,255,0.85)" font-size="8.5" font-weight="700" text-anchor="middle">N</text>
+            <text x="90" y="53" fill="rgba(255,255,255,0.7)" font-size="8.5" font-weight="700" text-anchor="middle">E</text>
+            <text x="50" y="93" fill="rgba(255,255,255,0.7)" font-size="8.5" font-weight="700" text-anchor="middle">S</text>
+            <text x="10" y="53" fill="rgba(255,255,255,0.7)" font-size="8.5" font-weight="700" text-anchor="middle">W</text>
+            <text x="50" y="48" fill="#ffffff" font-size="13" font-weight="600" text-anchor="middle" id="compass-speed-num">--</text>
+            <text x="50" y="59" fill="rgba(255,255,255,0.65)" font-size="8" font-weight="500" text-anchor="middle">km/h</text>
             <g id="compass-needle" class="compass-needle" style="transform: rotate(0deg);">
-              <circle cx="21" cy="55" r="3.5" fill="#ffffff" />
-              <line x1="21" y1="55" x2="88" y2="55" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
-              <polygon points="90,55 83,50 85,55 83,60" fill="#ffffff" />
+              <circle cx="19" cy="50" r="3" fill="#ffffff" />
+              <line x1="19" y1="50" x2="80" y2="50" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+              <polygon points="82,50 76,46 78,50 76,54" fill="#ffffff" />
             </g>
           </svg>
         </div>
@@ -1646,7 +1677,7 @@
       <div class="sun-status-desc" id="statusDesc">Tracking Solar Transit...</div>
 
       <div class="sun-arc-container">
-        <svg class="sun-arc-svg" viewBox="0 0 320 160">
+        <svg class="sun-arc-svg" viewBox="0 0 320 150">
           <defs>
             <linearGradient id="arcStrokeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
@@ -1662,9 +1693,9 @@
             </filter>
           </defs>
 
-          <line x1="20" y1="135" x2="300" y2="135" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="3,3" />
-          <path d="M 25 135 Q 160 20 295 135" fill="none" stroke="url(#arcStrokeGrad)" stroke-width="2.5" stroke-linecap="round" />
-          <circle id="celestialOrb" class="celestial-orb" cx="25" cy="135" r="9" fill="#facc15" filter="url(#sunOrbGlow)" />
+          <line x1="20" y1="125" x2="300" y2="125" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="3,3" />
+          <path d="M 25 125 Q 160 15 295 125" fill="none" stroke="url(#arcStrokeGrad)" stroke-width="2.5" stroke-linecap="round" />
+          <circle id="celestialOrb" class="celestial-orb" cx="25" cy="125" r="8.5" fill="#facc15" filter="url(#sunOrbGlow)" />
         </svg>
       </div>
 
@@ -1689,7 +1720,7 @@
 
       <div class="moon-visual">
         <div class="canvas-wrapper">
-          <canvas id="moon-canvas" width="170" height="170"></canvas>
+          <canvas id="moon-canvas" width="150" height="150"></canvas>
         </div>
         <div class="moon-phase-name" id="phase-name">Calculating...</div>
         <div class="meta-badges">
@@ -1727,7 +1758,7 @@
 
     <!-- BIOCLIMATIC & VECTOR RISK -->
     <div class="section-label">Bioclimatic & Vector Risk</div>
-    <div class="weather-card" style="gap: 12px;">
+    <div class="weather-card" style="gap: 10px;">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
         <span>BIOCLIMATIC INDICES</span>
@@ -1758,7 +1789,7 @@
 
     <!-- GEOLOGICAL & MARINE HAZARDS -->
     <div class="section-label">Geological, Marine & Atmospheric Hazards</div>
-    <div class="weather-card" style="gap: 12px;">
+    <div class="weather-card" style="gap: 10px;">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
         <span>EARLY WARNING TELEMETRY</span>
@@ -1862,7 +1893,7 @@
 
   <nav class="ios-dock">
     <div class="dock-icon" title="Reset to Current Location" onclick="goToCity(0)">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M20.5 3l-5.5 2-5-2-5.5 2v16l5.5-2 5 2 5.5-2V3zM15 18.2l-4-1.6V5.8l4 1.6v10.8z"/>
       </svg>
     </div>
@@ -1870,7 +1901,7 @@
     <div class="dock-pagination" id="dockPagination"></div>
 
     <div class="dock-icon" title="Manage / Add Cities" onclick="toggleCityModal(true)">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M4 18h16v-2H4v2zm0-5h16v-2H4v2zm0-7v2h16V6H4z"/>
       </svg>
     </div>
@@ -1897,7 +1928,7 @@
         <ul class="search-results-list" id="searchResultsList"></ul>
       </div>
 
-      <div class="search-tag" style="margin-top: 10px;">Saved Cities</div>
+      <div class="search-tag" style="margin-top: 8px;">Saved Cities</div>
       <ul class="saved-cities-list" id="savedCitiesList"></ul>
     </div>
   </div>
@@ -2319,30 +2350,30 @@
     ];
 
     const textureCanvas = document.createElement('canvas');
-    textureCanvas.width = 170;
-    textureCanvas.height = 170;
+    textureCanvas.width = 150;
+    textureCanvas.height = 150;
 
     (function initTexture() {
       const ctx = textureCanvas.getContext('2d');
-      const r = 85;
+      const r = 75;
 
-      const bg = ctx.createRadialGradient(r - 20, r - 20, 10, r, r, r);
+      const bg = ctx.createRadialGradient(r - 18, r - 18, 8, r, r, r);
       bg.addColorStop(0, '#f1f5f9');
       bg.addColorStop(0.7, '#cbd5e1');
       bg.addColorStop(1, '#94a3b8');
       ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, 170, 170);
+      ctx.fillRect(0, 0, 150, 150);
 
       const maria = [
-        { x: 65, y: 65, r: 24 }, { x: 88, y: 55, r: 18 }, { x: 105, y: 72, r: 15 },
-        { x: 60, y: 105, r: 28 }, { x: 110, y: 100, r: 20 }, { x: 82, y: 115, r: 22 },
-        { x: 45, y: 78, r: 14 }
+        { x: 57, y: 57, r: 21 }, { x: 78, y: 48, r: 16 }, { x: 93, y: 64, r: 13 },
+        { x: 53, y: 93, r: 25 }, { x: 97, y: 88, r: 18 }, { x: 72, y: 102, r: 19 },
+        { x: 40, y: 69, r: 12 }
       ];
       ctx.fillStyle = 'rgba(71, 85, 105, 0.35)';
       maria.forEach(m => {
         ctx.beginPath();
         ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
-        ctx.filter = 'blur(6px)';
+        ctx.filter = 'blur(5px)';
         ctx.fill();
       });
       ctx.filter = 'none';
@@ -2694,14 +2725,14 @@
 
       if (isThunder) {
         container.innerHTML = `
-          <svg viewBox="0 0 64 64" width="60" height="60">
+          <svg viewBox="0 0 64 64" width="54" height="54">
             <path d="M18 36a10 10 0 0 1 18-5 14 14 0 0 1 20 12 8 8 0 0 1-8 8H18a10 10 0 0 1 0-20z" fill="#475569" style="animation: floatCloud 3s ease-in-out infinite;"/>
             <polygon points="32,34 25,47 31,47 28,58 40,43 33,43" fill="#facc15" style="animation: thunderFlash 2.5s infinite;"/>
           </svg>
         `;
       } else if (isRain) {
         container.innerHTML = `
-          <svg viewBox="0 0 64 64" width="60" height="60">
+          <svg viewBox="0 0 64 64" width="54" height="54">
             <path d="M18 30a10 10 0 0 1 18-5 14 14 0 0 1 20 12 8 8 0 0 1-8 8H18a10 10 0 0 1 0-20z" fill="#64748b" style="animation: floatCloud 4s ease-in-out infinite;"/>
             <line x1="22" y1="46" x2="19" y2="56" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" style="animation: rainFall 1.2s infinite;"/>
             <line x1="32" y1="46" x2="29" y2="56" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" style="animation: rainFall 1.4s 0.3s infinite;"/>
@@ -2710,7 +2741,7 @@
         `;
       } else if (isPolluted) {
         container.innerHTML = `
-          <svg viewBox="0 0 64 64" width="60" height="60">
+          <svg viewBox="0 0 64 64" width="54" height="54">
             <circle cx="32" cy="24" r="12" fill="${isNight ? '#cbd5e1' : '#fbbf24'}" opacity="0.4"/>
             <line x1="12" y1="36" x2="52" y2="36" stroke="#fdba74" stroke-width="3" stroke-linecap="round" style="animation: hazeWaver 3s ease-in-out infinite;"/>
             <line x1="16" y1="44" x2="48" y2="44" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round" opacity="0.8" style="animation: hazeWaver 3.5s ease-in-out 0.4s infinite;"/>
@@ -2719,14 +2750,14 @@
         `;
       } else if (isOvercast) {
         container.innerHTML = `
-          <svg viewBox="0 0 64 64" width="60" height="60">
+          <svg viewBox="0 0 64 64" width="54" height="54">
             <path d="M16 38a10 10 0 0 1 18-5 14 14 0 0 1 20 12 8 8 0 0 1-8 8H16a10 10 0 0 1 0-20z" fill="#94a3b8" opacity="0.9" style="animation: floatCloud 4.5s ease-in-out infinite;"/>
             <path d="M26 30a8 8 0 0 1 14-4 11 11 0 0 1 16 10 6 6 0 0 1-6 6H26a8 8 0 0 1 0-16z" fill="#cbd5e1" opacity="0.85" style="animation: floatCloud 3.5s ease-in-out reverse infinite;"/>
           </svg>
         `;
       } else if (isNight) {
         container.innerHTML = `
-          <svg viewBox="0 0 64 64" width="60" height="60">
+          <svg viewBox="0 0 64 64" width="54" height="54">
             <circle cx="16" cy="18" r="1.5" fill="#ffffff" style="animation: starTwinkle 2.5s infinite;" />
             <circle cx="48" cy="14" r="1.2" fill="#ffffff" style="animation: starTwinkle 3s 0.8s infinite;" />
             <circle cx="50" cy="46" r="1.5" fill="#ffffff" style="animation: starTwinkle 2.2s 1.4s infinite;" />
@@ -2735,7 +2766,7 @@
         `;
       } else {
         container.innerHTML = `
-          <svg viewBox="0 0 64 64" width="60" height="60">
+          <svg viewBox="0 0 64 64" width="54" height="54">
             <g style="transform-origin: 32px 32px; animation: sunSpin 24s linear infinite;">
               <line x1="32" y1="10" x2="32" y2="4" stroke="#facc15" stroke-width="3" stroke-linecap="round"/>
               <line x1="32" y1="60" x2="32" y2="54" stroke="#facc15" stroke-width="3" stroke-linecap="round"/>
@@ -2749,6 +2780,24 @@
             <circle cx="32" cy="32" r="14" fill="#fbbf24" filter="drop-shadow(0 0 8px rgba(251, 191, 36, 0.7))"/>
           </svg>
         `;
+      }
+    }
+
+    function renderClimate3DIcon(weatherCode, rainMm) {
+      const box = document.getElementById("climate-3d-icon-box");
+      if (!box) return;
+      const isThunder = weatherCode === 8000 || [95, 96, 99].includes(weatherCode);
+      const isRain = rainMm > 0 || [51, 53, 55, 61, 63, 65, 80, 81, 82, 4000, 4001, 4200, 4201].includes(weatherCode);
+      const isNight = isNightTime();
+
+      if (isThunder) {
+        box.innerHTML = `<div class="cloud-3d cloud-storm"></div><div class="lightning-3d"></div><div class="rain-drop r1"></div><div class="rain-drop r3"></div>`;
+      } else if (isRain) {
+        box.innerHTML = `<div class="cloud-3d"></div><div class="rain-drop r1"></div><div class="rain-drop r2"></div><div class="rain-drop r3"></div>`;
+      } else if (isNight) {
+        box.innerHTML = `<div class="moon-3d"></div><div class="cloud-3d"></div>`;
+      } else {
+        box.innerHTML = `<div class="sun-3d"></div><div class="cloud-3d"></div>`;
       }
     }
 
@@ -3044,9 +3093,9 @@
 
       const isDay = now >= transitSunriseDate && now < transitSunsetDate;
       const orb = document.getElementById("celestialOrb");
-      const p0 = { x: 25, y: 135 };
-      const p1 = { x: 160, y: 20 };
-      const p2 = { x: 295, y: 135 };
+      const p0 = { x: 25, y: 125 };
+      const p1 = { x: 160, y: 15 };
+      const p2 = { x: 295, y: 125 };
 
       let t = 0;
 
@@ -3132,7 +3181,7 @@
       document.getElementById("pressureTrendArrow").innerText = pressureHpa <= prevPressureHpa ? "↓" : "↑";
     }
 
-    function updateClimateWidget(curTemp, feelsTemp, conditionText, highTemp, lowTemp, avgBaseline, aqi, pm25, uv, humidity, rainProb, dewPoint) {
+    function updateClimateWidget(curTemp, feelsTemp, conditionText, highTemp, lowTemp, avgBaseline, aqi, pm25, uv, humidity, rainProb, dewPoint, windSpeedKmh, weatherCode, rainMm) {
       const roundCur = Math.round(curTemp);
       const roundFeels = Math.round(feelsTemp);
       const roundHigh = Math.round(highTemp);
@@ -3159,6 +3208,12 @@
       badge.style.background = diff > 0 ? "rgba(251, 146, 60, 0.25)" : (diff < 0 ? "rgba(56, 189, 248, 0.25)" : "rgba(255, 255, 255, 0.15)");
       badge.style.color = diff > 0 ? "#fb923c" : (diff < 0 ? "#38bdf8" : "#ffffff");
       document.getElementById("unified-avg-baseline").innerText = `${diff >= 0 ? 'above' : 'below'} avg (${avgBaseline}°)`;
+
+      // Update Wind Speed Bar in Climate widget
+      const roundWind = Math.round(windSpeedKmh);
+      const windPct = Math.min(100, Math.max(8, Math.round((roundWind / 50) * 100)));
+      document.getElementById("metric-wind").innerText = `${roundWind} km/h`;
+      document.getElementById("bar-wind").style.width = `${windPct}%`;
 
       let uvCategory = "Low";
       let uvColor = "#34d399";
@@ -3197,6 +3252,9 @@
       document.getElementById("metric-prob").innerText = `${Math.round(rainProb)}% chance next 60m`;
       document.getElementById("bar-prob").style.background = probColor;
       document.getElementById("bar-prob").style.width = `${Math.max(rainProb > 0 ? 8 : 2, rainProb)}%`;
+
+      // Update Climate 3D Icon
+      renderClimate3DIcon(weatherCode, rainMm);
 
       // Update added Bioclimatic indicators
       processBioclimaticMetrics(roundCur, Math.round(humidity));
@@ -3337,7 +3395,7 @@
         if (tEl) tEl.innerText = `${s.temp}°`;
         if (hEl) hEl.innerText = `${s.hum}%`;
         if (uEl) uEl.innerText = `${s.uv}`;
-        if (wEl) wEl.innerText = `${s.wind}k`;
+        if (wEl) wEl.innerText = `${s.wind} K/H`;
         if (rEl) rEl.innerText = `${s.rain}mm`;
         if (iEl) iEl.innerHTML = getPeriodIcon(s.rain, i >= 2);
       }
@@ -3526,10 +3584,12 @@
       }
       document.getElementById("narrative-daily-text").innerText = `Anticipated high of ${todayHigh}° and low of ${todayLow}° today with ${weatherLabel.toLowerCase()}.`;
 
+      const windKmh = (cur.windSpeed || 0) * 3.6;
+
       updateClimateWidget(
         currentTemp, feelsTemp, weatherLabel, todayHigh, todayLow, active.baselineAvg || 32,
         latestAqi, latestPm25, Math.round(cur.uvIndex || 0), cur.humidity || 56,
-        cur.precipitationProbability || 0, cur.dewPoint || cur.temperature
+        cur.precipitationProbability || 0, cur.dewPoint || cur.temperature, windKmh, cur.weatherCode, cur.rainIntensity || 0
       );
 
       const presVal = Math.round(cur.pressureSurfaceLevel || 1006);
@@ -3546,7 +3606,6 @@
       const dewVal = Math.round(cur.dewPoint || cur.temperature);
       document.getElementById("val-dewpoint").innerText = `${dewVal}°C`;
 
-      const windKmh = (cur.windSpeed || 0) * 3.6;
       const gustKmh = (cur.windGust || cur.windSpeed || 0) * 3.6;
       const windDirDeg = cur.windDirection || 0;
       const cardinal = getDegreesToCardinal(windDirDeg);
@@ -3654,11 +3713,13 @@
       const min0 = Math.round(daily.temperature_2m_min[0]);
       document.getElementById("narrative-daily-text").innerText = `Anticipated high of ${max0}° and low of ${min0}° today with ${weatherLabel.toLowerCase()}.`;
 
+      const windKmh = cur.wind_speed_10m || 0;
+
       updateClimateWidget(
         currentTemp, feelsTemp, weatherLabel, max0, min0, active.baselineAvg || 32,
         latestAqi, latestPm25, Math.round(hourly.uv_index ? hourly.uv_index[startIdx] : 0),
         cur.relative_humidity_2m || 56, hourly.precipitation_probability[startIdx] || 0,
-        hourly.dew_point_2m[startIdx] || cur.temperature_2m
+        hourly.dew_point_2m[startIdx] || cur.temperature_2m, windKmh, cur.weather_code, cur.rain
       );
 
       const presVal = Math.round(cur.surface_pressure || 1006);
@@ -3675,7 +3736,6 @@
       const dewVal = Math.round(hourly.dew_point_2m[startIdx] || cur.temperature_2m);
       document.getElementById("val-dewpoint").innerText = `${dewVal}°C`;
 
-      const windKmh = cur.wind_speed_10m || 0;
       const gustKmh = cur.wind_gusts_10m || cur.wind_speed_10m || 0;
       const windDirDeg = cur.wind_direction_10m || 0;
       const cardinal = getDegreesToCardinal(windDirDeg);
@@ -4018,19 +4078,19 @@
             else if (props.mag < 4.0) badgeColor = '#eab308';
 
             const item = document.createElement('li');
-            item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;';
+            item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;';
             
             item.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
-                    <span style="background: ${badgeColor}; color: white; font-weight: bold; padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                    <span style="background: ${badgeColor}; color: white; font-weight: bold; padding: 2px 6px; border-radius: 6px; font-size: 0.72rem; flex-shrink: 0;">
                         M ${props.mag.toFixed(1)}
                     </span>
                     <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${props.place}">${props.place}</div>
-                        <div style="font-size: 0.7rem; color: var(--text-muted);">${time}</div>
+                        <div style="font-size: 0.8rem; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${props.place}">${props.place}</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">${time}</div>
                     </div>
                 </div>
-                <a href="${props.url}" target="_blank" style="font-size: 0.75rem; color: #38bdf8; text-decoration: none; font-weight: 500; flex-shrink: 0; margin-left: 8px;">
+                <a href="${props.url}" target="_blank" style="font-size: 0.72rem; color: #38bdf8; text-decoration: none; font-weight: 500; flex-shrink: 0; margin-left: 8px;">
                     Details &rarr;
                 </a>
             `;
@@ -4119,7 +4179,7 @@
                   <span class="city-item-name">${resItem.name}</span>
                   <span class="city-item-country">${admin}${resItem.country || ''}</span>
                 </div>
-                <span style="font-size: 0.8rem; color: #38bdf8; font-weight: 600;">+ Add</span>
+                <span style="font-size: 0.78rem; color: #38bdf8; font-weight: 600;">+ Add</span>
               `;
               item.onclick = () => addNewCity({
                 name: resItem.name,
@@ -4134,7 +4194,7 @@
             });
           } else {
             searchSection.style.display = "block";
-            list.innerHTML = `<li style="font-size: 0.85rem; color: var(--text-muted); padding: 8px;">No cities found.</li>`;
+            list.innerHTML = `<li style="font-size: 0.8rem; color: var(--text-muted); padding: 8px;">No cities found.</li>`;
           }
         } catch (err) {
           console.error("Geocoding failed:", err);
