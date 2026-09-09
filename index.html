@@ -449,7 +449,7 @@
     .today-period-row .lbl { color: var(--text-muted); }
     .today-period-row .val { font-weight: 600; color: #ffffff; }
 
-    /* 3-Day Segmented Outlook Widget (Matches card width, 4 rows per column) */
+    /* 3-Day Segmented Outlook Widget */
     .forecast-card-tri {
       width: 100%;
       background: var(--card-bg);
@@ -1224,6 +1224,20 @@
           </div>
           <div class="ios-progress-track">
             <div class="ios-progress-fill" id="bar-prob" style="background: #22d3ee; width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Daily Precipitation Bar -->
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-precip" style="background: #0284c7;"></span>
+              <span id="label-precip">Precipitation Today</span>
+            </div>
+            <div class="climate-metric-right" id="metric-precip">0.0 mm</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-precip" style="background: #0284c7; width: 0%;"></div>
           </div>
         </div>
       </div>
@@ -3222,7 +3236,7 @@
       document.getElementById("pressureTrendArrow").innerText = pressureHpa <= prevPressureHpa ? "↓" : "↑";
     }
 
-    function updateClimateWidget(curTemp, feelsTemp, conditionText, highTemp, lowTemp, avgBaseline, aqi, pm25, uv, humidity, rainProb, dewPoint, windSpeedKmh, weatherCode, rainMm) {
+    function updateClimateWidget(curTemp, feelsTemp, conditionText, highTemp, lowTemp, avgBaseline, aqi, pm25, uv, humidity, rainProb, dewPoint, windSpeedKmh, weatherCode, rainMm, dailyPrecipMm = 0) {
       const roundCur = Math.round(curTemp);
       const roundFeels = Math.round(feelsTemp);
       const roundHigh = Math.round(highTemp);
@@ -3292,6 +3306,24 @@
       document.getElementById("metric-prob").innerText = `${Math.round(rainProb)}% chance next 60m`;
       document.getElementById("bar-prob").style.background = probColor;
       document.getElementById("bar-prob").style.width = `${Math.max(rainProb > 0 ? 8 : 2, rainProb)}%`;
+
+      // Update Daily Precipitation in Climate Stack
+      const precipVal = parseFloat(dailyPrecipMm) || 0;
+      const precipPct = Math.min(100, Math.max(precipVal > 0 ? 8 : 2, Math.round((precipVal / 30) * 100)));
+      const precipColor = precipVal >= 25 ? "#f43f5e" : (precipVal >= 10 ? "#38bdf8" : "#0284c7");
+      
+      const dotPrecip = document.getElementById("dot-precip");
+      const lblPrecip = document.getElementById("label-precip");
+      const metPrecip = document.getElementById("metric-precip");
+      const barPrecip = document.getElementById("bar-precip");
+
+      if (dotPrecip) dotPrecip.style.background = precipColor;
+      if (lblPrecip) lblPrecip.innerText = `Precipitation Today`;
+      if (metPrecip) metPrecip.innerText = `${precipVal.toFixed(1)} mm total`;
+      if (barPrecip) {
+        barPrecip.style.background = precipColor;
+        barPrecip.style.width = `${precipPct}%`;
+      }
 
       // Render accurate day/night 3D animated icon
       renderClimate3DIcon(weatherCode, rainMm);
@@ -3524,7 +3556,8 @@
       const active = getActiveCity();
       initOrUpdateSatelliteMap(active.lat, active.lon);
 
-      const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${active.lat}&longitude=${active.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,rain,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,weather_code&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,rain,precipitation_probability,cloud_cover,surface_pressure,wind_speed_10m,wind_gusts_10m,uv_index,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,rain_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&timezone=auto&forecast_days=7`;
+      // Using ECMWF IFS (High Resolution 9km) and requesting daily precipitation_sum
+      const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${active.lat}&longitude=${active.lon}&models=ecmwf_ifs025&current=temperature_2m,relative_humidity_2m,apparent_temperature,rain,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,weather_code&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,rain,precipitation_probability,cloud_cover,surface_pressure,wind_speed_10m,wind_gusts_10m,uv_index,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&timezone=auto&forecast_days=7`;
       const tomorrowUrl = `https://api.tomorrow.io/v4/weather/forecast?location=${active.lat},${active.lon}&timesteps=1h,1d&units=metric&apikey=${API_KEY}`;
 
       let data = null;
@@ -3622,10 +3655,12 @@
 
       let todayHigh = currentTemp + 2;
       let todayLow = currentTemp - 4;
+      let todayPrecip = 0;
       if (daily && daily.length > 0) {
         const d0 = daily[0].values;
         todayHigh = Math.round(d0.temperatureMax);
         todayLow = Math.round(d0.temperatureMin);
+        todayPrecip = d0.rainAccumulationSum || 0;
       }
       document.getElementById("narrative-daily-text").innerText = `Anticipated high of ${todayHigh}° and low of ${todayLow}° today with ${weatherLabel.toLowerCase()}.`;
 
@@ -3634,7 +3669,8 @@
       updateClimateWidget(
         currentTemp, feelsTemp, weatherLabel, todayHigh, todayLow, active.baselineAvg || 32,
         latestAqi, latestPm25, Math.round(cur.uvIndex || 0), cur.humidity || 56,
-        cur.precipitationProbability || 0, cur.dewPoint || cur.temperature, windKmh, cur.weatherCode, cur.rainIntensity || 0
+        cur.precipitationProbability || 0, cur.dewPoint || cur.temperature, windKmh, cur.weatherCode, cur.rainIntensity || 0,
+        todayPrecip
       );
 
       const presVal = Math.round(cur.pressureSurfaceLevel || 1006);
@@ -3642,7 +3678,7 @@
 
       const rainVal = (cur.rainIntensity || 0).toFixed(1);
       document.getElementById("val-rain").innerText = `${rainVal} mm/h`;
-      document.getElementById("rain-rate-sub").innerText = rainVal > 0 ? "Active precipitation rate." : "No rain in the past hour.";
+      document.getElementById("rain-rate-sub").innerText = rainVal > 0 ? "Active precipitation rate." : `Total expected today: ${todayPrecip.toFixed(1)} mm`;
 
       const cloudPct = Math.round(cur.cloudCover || 0);
       document.getElementById("val-cloud").innerText = `${cloudPct}%`;
@@ -3728,12 +3764,13 @@
       cachedDaily = [];
       for (let i = 0; i < Math.min(7, daily.time.length); i++) {
         const estWh = Math.round(2700 * (1 - 0.35 * 0.52));
+        const dayPrecip = daily.precipitation_sum ? daily.precipitation_sum[i] : (daily.rain_sum ? daily.rain_sum[i] : 0);
         cachedDaily.push({
           time: daily.time[i],
           tempMax: daily.temperature_2m_max[i],
           tempMin: daily.temperature_2m_min[i],
           humidityAvg: 65,
-          rainSum: daily.rain_sum[i] || 0,
+          rainSum: dayPrecip,
           windMax: daily.wind_speed_10m_max ? daily.wind_speed_10m_max[i] : 14,
           uvMax: daily.uv_index_max ? daily.uv_index_max[i] : 6,
           solarWh: estWh,
@@ -3754,6 +3791,8 @@
 
       const max0 = Math.round(daily.temperature_2m_max[0]);
       const min0 = Math.round(daily.temperature_2m_min[0]);
+      const todayTotalPrecip = daily.precipitation_sum ? daily.precipitation_sum[0] : (daily.rain_sum ? daily.rain_sum[0] : 0);
+      
       document.getElementById("narrative-daily-text").innerText = `Anticipated high of ${max0}° and low of ${min0}° today with ${weatherLabel.toLowerCase()}.`;
 
       const windKmh = cur.wind_speed_10m || 0;
@@ -3762,7 +3801,8 @@
         currentTemp, feelsTemp, weatherLabel, max0, min0, active.baselineAvg || 32,
         latestAqi, latestPm25, Math.round(hourly.uv_index ? hourly.uv_index[startIdx] : 0),
         cur.relative_humidity_2m || 56, hourly.precipitation_probability[startIdx] || 0,
-        hourly.dew_point_2m[startIdx] || cur.temperature_2m, windKmh, cur.weather_code, cur.rain
+        hourly.dew_point_2m[startIdx] || cur.temperature_2m, windKmh, cur.weather_code, cur.rain,
+        todayTotalPrecip
       );
 
       const presVal = Math.round(cur.surface_pressure || 1006);
@@ -3770,7 +3810,7 @@
 
       const rainVal = (cur.rain || 0).toFixed(1);
       document.getElementById("val-rain").innerText = `${rainVal} mm/h`;
-      document.getElementById("rain-rate-sub").innerText = rainVal > 0 ? "Active precipitation rate." : "No rain in the past hour.";
+      document.getElementById("rain-rate-sub").innerText = rainVal > 0 ? "Active precipitation rate." : `Total expected today: ${todayTotalPrecip.toFixed(1)} mm`;
 
       const cloudPct = Math.round(cur.cloud_cover || 0);
       document.getElementById("val-cloud").innerText = `${cloudPct}%`;
