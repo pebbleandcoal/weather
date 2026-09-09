@@ -449,7 +449,7 @@
     .today-period-row .lbl { color: var(--text-muted); }
     .today-period-row .val { font-weight: 600; color: #ffffff; }
 
-    /* 3-Day Segmented Outlook Widget */
+    /* 3-Day Segmented Outlook Widget (Matches card width, 4 rows per column) */
     .forecast-card-tri {
       width: 100%;
       background: var(--card-bg);
@@ -2062,6 +2062,50 @@
       }
     }
 
+    // Historical Climate Normals fetcher (Queries Open-Meteo Archive across 10 years)
+    async function fetchHistoricalBaselineAvg(lat, lon, timezone = "auto") {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+
+      const startYear = 2014;
+      const endYear = 2023;
+      const startDate = `${startYear}-${month}-${day}`;
+      const endDate = `${endYear}-${month}-${day}`;
+
+      const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max&timezone=${encodeURIComponent(timezone)}`;
+
+      try {
+        const res = await fetch(archiveUrl);
+        if (!res.ok) throw new Error(`Archive API status ${res.status}`);
+        const data = await res.json();
+
+        if (data.daily && data.daily.time && data.daily.temperature_2m_max) {
+          const targetDaySuffix = `-${month}-${day}`;
+          const dayTemps = [];
+
+          data.daily.time.forEach((dateStr, idx) => {
+            if (dateStr.endsWith(targetDaySuffix) && data.daily.temperature_2m_max[idx] !== null) {
+              dayTemps.push(data.daily.temperature_2m_max[idx]);
+            }
+          });
+
+          if (dayTemps.length > 0) {
+            const sum = dayTemps.reduce((acc, t) => acc + t, 0);
+            return Math.round(sum / dayTemps.length);
+          }
+        }
+      } catch (err) {
+        console.warn("Historical baseline fetch error, using latitude-based fallback:", err);
+      }
+
+      // Fallback estimate based on latitude & season
+      const absLat = Math.abs(lat);
+      if (absLat < 23.5) return 32;
+      if (absLat < 45) return now.getMonth() >= 4 && now.getMonth() <= 9 ? 25 : 12;
+      return now.getMonth() >= 4 && now.getMonth() <= 9 ? 19 : 2;
+    }
+
     // --- Distance calculation utility ---
     function calculateDistanceKm(lat1, lon1, lat2, lon2) {
       const R = 6371;
@@ -2326,7 +2370,7 @@
 
     // --- Atmospheric Hazards & Flooding / Squall Logic ---
     async function loadAtmosphericHazards(lat, lon) {
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,surface_pressure&hourly=cape&daily=precipitation_sum,wind_speed_10m_max&timezone=auto&forecast_days=2`;
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ecmwf_ifs025&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,surface_pressure&hourly=cape&daily=precipitation_sum,wind_speed_10m_max&timezone=auto&forecast_days=2`;
 
       try {
         const res = await fetch(weatherUrl);
@@ -4294,6 +4338,10 @@
 
     async function updateCityView() {
       const active = getActiveCity();
+
+      // Dynamically fetch and update the historical climate normal for this location
+      active.baselineAvg = await fetchHistoricalBaselineAvg(active.lat, active.lon, active.timezone || "auto");
+
       await fetchSolarEphemeris(active.lat, active.lon);
       await loadAirQuality();
       await loadWeatherData();
