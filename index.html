@@ -64,6 +64,52 @@
       touch-action: pan-y;
     }
 
+    /* iOS Pull to Refresh Indicator */
+    #pullDownIndicator {
+      position: fixed;
+      top: -55px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(20, 32, 48, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 18px;
+      border-radius: 99px;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #pullDownIndicator svg {
+      width: 16px;
+      height: 16px;
+      fill: #38bdf8;
+      transition: transform 0.25s ease;
+    }
+
+    #pullDownIndicator.pulling-ready svg {
+      transform: rotate(180deg);
+    }
+
+    #pullDownIndicator.refreshing svg {
+      animation: spinEarth 0.8s linear infinite;
+    }
+
+    #pullDownIndicator span {
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+
     #weatherCanvas {
       position: fixed;
       inset: 0;
@@ -83,13 +129,13 @@
       transition: opacity 0.08s ease-out;
     }
 
-    /* Loading Overlay Styles */
+    /* Loading Overlay Styles - 20% Translucent Background */
     #loadingOverlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.5);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(15, 23, 42, 0.20);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       z-index: 9999;
       display: flex;
       flex-direction: column;
@@ -127,7 +173,7 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #ffffff;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
 
     .ios-shell {
@@ -519,7 +565,7 @@
     .today-period-row .lbl { color: var(--text-muted); }
     .today-period-row .val { font-weight: 600; color: #ffffff; }
 
-    /* 3-Day Segmented Outlook Widget (Matches card width, 4 rows per column) */
+    /* 3-Day Segmented Outlook Widget */
     .forecast-card-tri {
       width: 100%;
       background: var(--card-bg);
@@ -627,7 +673,7 @@
       white-space: nowrap;
     }
 
-    /* 3D Icons & Subtle Animations */
+    /* 3D Icons & Animations */
     .icon-box-tri {
       width: 24px;
       height: 22px;
@@ -645,7 +691,6 @@
       margin: 2px 0;
     }
 
-    /* Animated Climate 3D Hero Icon */
     .climate-hero-icon {
       width: 52px;
       height: 44px;
@@ -707,7 +752,6 @@
       animation: sunPulseGlow 3s ease-in-out infinite;
     }
 
-    /* 3D Crescent Moon & Ambient Twinkling Stars */
     .moon-3d {
       position: absolute;
       width: 18px;
@@ -1159,10 +1203,18 @@
   </style>
 </head>
 <body>
+  <!-- iPhone Pull-to-Refresh Indicator -->
+  <div id="pullDownIndicator">
+    <svg viewBox="0 0 24 24">
+      <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+    </svg>
+    <span id="pullDownText">Pull to Refresh</span>
+  </div>
+
   <canvas id="weatherCanvas"></canvas>
   <div id="lightningFlash"></div>
 
-  <!-- Loading Overlay with Spinning Earth & 50% Transparent Background -->
+  <!-- Loading Overlay with Spinning Earth & 20% Transparent Background -->
   <div id="loadingOverlay" class="visible">
     <div class="spinning-earth"></div>
     <div class="loading-text">Collecting Data</div>
@@ -1203,7 +1255,7 @@
       </div>
     </div>
 
-    <!-- Top Active Hazard & Bioclimatic Alerts (Shows only Orange & Red Warnings) -->
+    <!-- Top Active Hazard & Bioclimatic Alerts -->
     <div class="weather-card" id="topHazardAlertCard">
       <div class="card-title" style="color: #f87171;">
         <svg viewBox="0 0 24 24" style="fill: #f87171;"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
@@ -1212,7 +1264,7 @@
       <div class="top-hazard-list" id="topHazardAlertList"></div>
     </div>
 
-    <!-- Climate Card with Dynamic Animated Day/Night 3D Weather Icon -->
+    <!-- Climate Card -->
     <div class="weather-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 0-4 4v7.3a6 6 0 1 0 8 0V6a4 4 0 0 0-4-4zm0 18a4 4 0 0 1-2.4-7.2l.4-.3V6a2 2 0 1 1 4 0v6.5l.4.3A4 4 0 0 1 12 20z"/></svg>
@@ -1225,7 +1277,6 @@
           <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 3px;" id="unified-condition">Loading...</div>
         </div>
 
-        <!-- Dynamic Animated 3D Weather Icon in Center -->
         <div class="climate-hero-icon" id="climate-3d-icon-box">
           <div class="sun-3d"></div>
           <div class="cloud-3d"></div>
@@ -1353,7 +1404,6 @@
       </div>
 
       <div class="today-periods-track">
-        <!-- Morning -->
         <div class="today-period-card">
           <span class="today-period-label">Morning</span>
           <div class="icon-box-large" id="today-icon-0">
@@ -1369,7 +1419,6 @@
           </div>
         </div>
 
-        <!-- Afternoon -->
         <div class="today-period-card">
           <span class="today-period-label">Afternoon</span>
           <div class="icon-box-large" id="today-icon-1">
@@ -1385,7 +1434,6 @@
           </div>
         </div>
 
-        <!-- Evening -->
         <div class="today-period-card">
           <span class="today-period-label">Evening</span>
           <div class="icon-box-large" id="today-icon-2">
@@ -1401,7 +1449,6 @@
           </div>
         </div>
 
-        <!-- Night -->
         <div class="today-period-card">
           <span class="today-period-label">Night</span>
           <div class="icon-box-large" id="today-icon-3">
@@ -1430,7 +1477,7 @@
       <canvas id="hourlyForecastChart" class="chart-canvas"></canvas>
     </div>
 
-    <!-- 3-Day Weather 4-Period Forecast Widget (Exact Full Card Width, 4 Rows) -->
+    <!-- 3-Day Weather 4-Period Forecast Widget -->
     <div class="forecast-card-tri" id="forecast-3day-widget">
       <div class="tri-title">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
@@ -1827,7 +1874,7 @@
       </div>
     </div>
 
-    <!-- Sun & Moon Transit Ephemeris Widget -->
+    <!-- Sun Transit Widget -->
     <div class="weather-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M12 18a6 6 0 0 1-6-6h12a6 6 0 0 1-6 6zm-7-4H2v-2h3v2zm17 0h-3v-2h3v2zm-4.9-7.1 1.4-1.4 1.4 1.4-1.4 1.4-1.4-1.4zM5.5 8.3 4.1 6.9l1.4-1.4 1.4 1.4 1.4 1.4zM11 1h2v3h-2V1z"/></svg>
@@ -1871,7 +1918,7 @@
       </div>
     </div>
 
-    <!-- Integrated Moon Phase Widget placed below Solar Transit -->
+    <!-- Lunar Phase Widget -->
     <div class="weather-card">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/></svg>
@@ -1955,7 +2002,6 @@
         <span>EARLY WARNING TELEMETRY</span>
       </div>
 
-      <!-- 1. Fires in Area & Wildfire Danger -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🔥 Fires in Area & Thermal Hotspots</span>
@@ -1969,7 +2015,6 @@
         </div>
       </div>
 
-      <!-- 2. Volcanic Plume Warning -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌋 Volcanic Plume Warning</span>
@@ -1983,7 +2028,6 @@
         </div>
       </div>
 
-      <!-- 3. Tectonic Activity -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">⚡ Tectonic Activity</span>
@@ -1995,7 +2039,6 @@
         <div class="metric-sub" id="quakeSub">Connecting live seismic sensors...</div>
       </div>
 
-      <!-- 4. Tsunami Alerts -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌊 Tsunami Alerts</span>
@@ -2007,7 +2050,6 @@
         <div class="metric-sub" id="tsunamiSub">Evaluating oceanic hypocenters...</div>
       </div>
 
-      <!-- 5. Flash Flooding & Basin Runoff -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌊 Flash & River Flood Risk</span>
@@ -2021,7 +2063,6 @@
         </div>
       </div>
 
-      <!-- 6. Tropical Systems / Squall Shears -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌀 Tropical Systems / Typhoons</span>
@@ -2035,7 +2076,6 @@
         </div>
       </div>
 
-      <!-- 7. Convective Lightning Strikes -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">⚡ Lightning Activity</span>
@@ -2100,7 +2140,17 @@
     let cities = [
       { name: "Siem Reap", country: "Cambodia", lat: 13.3671, lon: 103.8448, timezone: "Asia/Bangkok", isCurrent: true, baselineAvg: 32 },
       { name: "Phnom Penh", country: "Cambodia", lat: 11.5564, lon: 104.9282, timezone: "Asia/Bangkok", isCurrent: false, baselineAvg: 33 },
-      { name: "Bangkok", country: "Thailand", lat: 13.7563, lon: 100.5018, timezone: "Asia/Bangkok", isCurrent: false, baselineAvg: 33 }
+      { name: "Bangkok", country: "Thailand", lat: 13.7563, lon: 100.5018, timezone: "Asia/Bangkok", isCurrent: false, baselineAvg: 33 },
+      { name: "Brisbane", country: "Australia", lat: -27.4698, lon: 153.0251, timezone: "Australia/Brisbane", isCurrent: false, baselineAvg: 26 },
+      { name: "Ho Chi Minh City", country: "Vietnam", lat: 10.8231, lon: 106.6297, timezone: "Asia/Ho_Chi_Minh", isCurrent: false, baselineAvg: 32 },
+      { name: "Hanoi", country: "Vietnam", lat: 21.0285, lon: 105.8542, timezone: "Asia/Bangkok", isCurrent: false, baselineAvg: 28 },
+      { name: "Singapore", country: "Singapore", lat: 1.3521, lon: 103.8198, timezone: "Asia/Singapore", isCurrent: false, baselineAvg: 31 },
+      { name: "Vientiane", country: "Laos", lat: 17.9757, lon: 102.6331, timezone: "Asia/Vientiane", isCurrent: false, baselineAvg: 31 },
+      { name: "Kuala Lumpur", country: "Malaysia", lat: 3.1390, lon: 101.6869, timezone: "Asia/Kuala_Lumpur", isCurrent: false, baselineAvg: 32 },
+      { name: "Manila", country: "Philippines", lat: 14.5995, lon: 120.9842, timezone: "Asia/Manila", isCurrent: false, baselineAvg: 31 },
+      { name: "Shenzhen", country: "China", lat: 22.5431, lon: 114.0579, timezone: "Asia/Shanghai", isCurrent: false, baselineAvg: 28 },
+      { name: "Tokyo", country: "Japan", lat: 35.6762, lon: 139.6503, timezone: "Asia/Tokyo", isCurrent: false, baselineAvg: 20 },
+      { name: "Seoul", country: "South Korea", lat: 37.5665, lon: 126.9780, timezone: "Asia/Seoul", isCurrent: false, baselineAvg: 18 }
     ];
 
     let currentCityIndex = 0;
@@ -2128,7 +2178,71 @@
       }
     }
 
-    // High-Precision Ephemeris Day/Night Calculator for currently active city
+    // --- iOS Pull-to-Refresh Handler ---
+    let pullStartY = 0;
+    let pullCurrentY = 0;
+    let isPulling = false;
+    let isRefreshing = false;
+    const PULL_THRESHOLD = 75;
+
+    function initPullToRefresh() {
+      const indicator = document.getElementById("pullDownIndicator");
+      const text = document.getElementById("pullDownText");
+
+      window.addEventListener("touchstart", (e) => {
+        if (window.scrollY <= 2 && !isRefreshing) {
+          pullStartY = e.touches[0].clientY;
+          isPulling = true;
+        }
+      }, { passive: true });
+
+      window.addEventListener("touchmove", (e) => {
+        if (!isPulling || isRefreshing) return;
+        pullCurrentY = e.touches[0].clientY;
+        const diff = pullCurrentY - pullStartY;
+
+        if (diff > 0 && window.scrollY <= 2) {
+          const clamped = Math.min(diff * 0.45, 90);
+          indicator.style.opacity = `${Math.min(1, clamped / 40)}`;
+          indicator.style.transform = `translate(-50%, ${clamped}px)`;
+
+          if (clamped >= PULL_THRESHOLD * 0.45) {
+            indicator.classList.add("pulling-ready");
+            text.innerText = "Release to Reload";
+          } else {
+            indicator.classList.remove("pulling-ready");
+            text.innerText = "Pull to Refresh";
+          }
+        }
+      }, { passive: true });
+
+      window.addEventListener("touchend", () => {
+        if (!isPulling || isRefreshing) return;
+        isPulling = false;
+        const diff = pullCurrentY - pullStartY;
+
+        if (diff * 0.45 >= PULL_THRESHOLD * 0.45 && window.scrollY <= 5) {
+          isRefreshing = true;
+          indicator.classList.remove("pulling-ready");
+          indicator.classList.add("refreshing");
+          text.innerText = "Reloading...";
+          indicator.style.transform = `translate(-50%, 75px)`;
+
+          if (navigator.vibrate) {
+            navigator.vibrate(20);
+          }
+
+          setTimeout(() => {
+            window.location.reload();
+          }, 350);
+        } else {
+          indicator.style.opacity = "0";
+          indicator.style.transform = "translate(-50%, 0px)";
+          indicator.classList.remove("pulling-ready");
+        }
+      });
+    }
+
     function isNightTime() {
       const active = getActiveCity();
       const now = new Date();
@@ -2140,7 +2254,6 @@
         }
       }
 
-      // Timezone-aware hour fallback
       try {
         const localParts = new Intl.DateTimeFormat('en-US', {
           timeZone: active.timezone || "Asia/Bangkok",
@@ -2155,7 +2268,6 @@
       }
     }
 
-    // Historical Climate Normals fetcher (Queries Open-Meteo Archive across past 15 years for daily mean)
     async function fetchHistoricalBaselineAvg(lat, lon, timezone = "auto") {
       const today = new Date();
       const targetMonthDay = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -2187,7 +2299,6 @@
         console.warn("Historical baseline fetch error, using fallback:", err);
       }
 
-      // Fallback estimate based on latitude & season
       const absLat = Math.abs(lat);
       const currentMonth = today.getMonth() + 1;
       const isSummer = currentMonth >= 5 && currentMonth <= 9;
@@ -2197,7 +2308,6 @@
       return isSummer ? 15 : -2;
     }
 
-    // --- Distance calculation utility ---
     function calculateDistanceKm(lat1, lon1, lat2, lon2) {
       const R = 6371;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -2210,7 +2320,6 @@
       return Math.round(R * c);
     }
 
-    // Top Active Hazards and Bioclimatic Alert Collector
     function syncTopActiveAlerts() {
       const card = document.getElementById("topHazardAlertCard");
       const list = document.getElementById("topHazardAlertList");
@@ -2232,10 +2341,10 @@
         if (!colorStr) return false;
         const s = colorStr.toLowerCase();
         return (
-          s.includes("244, 63, 94") || // accent-red
-          s.includes("239, 68, 68") || // red-500
-          s.includes("251, 146, 60") || // accent-orange
-          s.includes("249, 115, 22") || // orange-500
+          s.includes("244, 63, 94") ||
+          s.includes("239, 68, 68") ||
+          s.includes("251, 146, 60") ||
+          s.includes("249, 115, 22") ||
           s.includes("f43f5e") ||
           s.includes("ef4444") ||
           s.includes("fb923c") ||
@@ -2272,7 +2381,6 @@
       card.style.display = foundCount > 0 ? "flex" : "none";
     }
 
-    // --- Bioclimatic Snippet Implementation ---
     function calculateHumidex(tempC, humidityPct) {
       const e = (6.112 * Math.pow(10, (7.5 * tempC / (237.7 + tempC)))) * (humidityPct / 100);
       return Math.round(tempC + (5 / 9) * (e - 10));
@@ -2337,7 +2445,6 @@
       syncTopActiveAlerts();
     }
 
-    // --- Volcano Hazard Snippet Implementation ---
     const ACTIVE_VOLCANO_CATALOG = [
       { name: "Phnom Kulen Basalts", lat: 13.6, lon: 104.1, color: "GREEN" },
       { name: "Toroeng Prong", lat: 12.8, lon: 107.2, color: "GREEN" },
@@ -2388,7 +2495,6 @@
       syncTopActiveAlerts();
     }
 
-    // --- Seismic & Tsunami Hazard Snippet Implementation ---
     async function checkSeismicAndTsunami(lat, lon) {
       const quakeVal = document.getElementById("quakeVal");
       const quakeBar = document.getElementById("quakeBar");
@@ -2472,7 +2578,6 @@
       syncTopActiveAlerts();
     }
 
-    // --- Fire Hazard & Thermal Hotspots Snippet ---
     async function checkFireHazards(lat, lon, temp, humidity, windSpeed, rainMm) {
       const fireVal = document.getElementById("fireVal");
       const fireBar = document.getElementById("fireBar");
@@ -2529,7 +2634,6 @@
       syncTopActiveAlerts();
     }
 
-    // --- Atmospheric Hazards & Flooding / Squall Logic ---
     async function loadAtmosphericHazards(lat, lon) {
       const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ecmwf_ifs025&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,surface_pressure&hourly=cape&daily=precipitation_sum,wind_speed_10m_max&timezone=auto&forecast_days=2`;
 
@@ -2639,7 +2743,6 @@
       syncTopActiveAlerts();
     }
 
-    // --- Lunar Module Setup ---
     const PHASE_NAMES = [
       "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
       "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"
@@ -3139,7 +3242,6 @@
     function goToCity(newIndex, direction = null) {
       if (newIndex < 0 || newIndex >= cities.length || newIndex === currentCityIndex) return;
 
-      // Always return to the top of the page when changing location
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       const shell = document.getElementById("weatherShell");
@@ -3440,7 +3542,6 @@
       badge.style.background = diff > 0 ? "rgba(251, 146, 60, 0.25)" : (diff < 0 ? "rgba(56, 189, 248, 0.25)" : "rgba(255, 255, 255, 0.15)");
       badge.style.color = diff > 0 ? "#fb923c" : (diff < 0 ? "#38bdf8" : "#ffffff");
       
-      // Update Title to "Historical Mean For Today" and show only avg temp without trailing brackets
       document.getElementById("historicalContextTitle").innerText = "Historical Mean For Today";
       document.getElementById("unified-avg-baseline").innerHTML = `avg ${avgBaseline}°`;
 
@@ -3581,7 +3682,6 @@
       return `Dry and stable conditions expected over the next hour with minimal rain risk.`;
     }
 
-    // Dynamic rendering of Today's 4 Segments in 24-Hour Projection
     function renderTodayHourlySegments() {
       if (!fullHourlyTimeline || fullHourlyTimeline.length === 0) return;
 
@@ -3649,7 +3749,6 @@
       }
     }
 
-    // Dynamic rendering of 3-Day Forecast: 4 Day Parts (Morning, Afternoon, Evening, Night)
     function renderThreeDayProjectionWidget() {
       if (!cachedDaily || cachedDaily.length < 4) return;
 
@@ -3733,7 +3832,6 @@
       const active = getActiveCity();
       initOrUpdateSatelliteMap(active.lat, active.lon);
 
-      // Using ECMWF IFS (High Resolution 9km) and requesting daily precipitation_sum
       const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${active.lat}&longitude=${active.lon}&models=ecmwf_ifs025&current=temperature_2m,relative_humidity_2m,apparent_temperature,rain,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,weather_code&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,rain,precipitation_probability,cloud_cover,surface_pressure,wind_speed_10m,wind_gusts_10m,uv_index,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&timezone=auto&forecast_days=7`;
       const tomorrowUrl = `https://api.tomorrow.io/v4/weather/forecast?location=${active.lat},${active.lon}&timesteps=1h,1d&units=metric&apikey=${API_KEY}`;
 
@@ -4263,7 +4361,7 @@
         datasets = [
           { type: "bar", label: "Daily Rain (mm)", data: cachedDaily.map(d => d.rainSum.toFixed(1)), backgroundColor: "rgba(56, 189, 248, 0.8)", borderRadius: 6, yAxisID: "y" }
         ];
-        scales.y = { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}mm` } };
+        scales.y = { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)" } };
 
       } else if (currentDailyView === 'solar') {
         datasets = [
@@ -4358,7 +4456,6 @@
         });
     }
 
-    // Modal Sheet Handlers
     function toggleCityModal(show) {
       const backdrop = document.getElementById("modalBackdrop");
       if (show) {
@@ -4474,7 +4571,6 @@
       const active = getActiveCity();
 
       try {
-        // Dynamically fetch and update the historical climate normal for this location using archive daily mean temperatures
         active.baselineAvg = await fetchHistoricalBaselineAvg(active.lat, active.lon, active.timezone || "auto");
 
         await fetchSolarEphemeris(active.lat, active.lon);
@@ -4495,6 +4591,7 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
+      initPullToRefresh();
       renderPagination();
       updateCityView();
       document.getElementById('mag-filter').addEventListener('change', filterAndRenderEq);
