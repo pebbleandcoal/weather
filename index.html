@@ -83,42 +83,51 @@
       transition: opacity 0.08s ease-out;
     }
 
-    /* Fullscreen Loading Overlay */
+    /* Loading Overlay Styles */
     #loadingOverlay {
       position: fixed;
       inset: 0;
-      background: rgba(22, 33, 49, 0.85);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       z-index: 9999;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 16px;
-      transition: opacity 0.35s ease;
+      gap: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease-in-out;
     }
 
-    .loading-spinner {
-      width: 44px;
-      height: 44px;
-      border: 3.5px solid rgba(255, 255, 255, 0.2);
-      border-top-color: var(--accent);
+    #loadingOverlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .spinning-earth {
+      width: 56px;
+      height: 56px;
+      border: 3px solid rgba(56, 189, 248, 0.2);
+      border-top: 3px solid var(--accent);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spinEarth 1.1s linear infinite;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes spinEarth {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
-    .loading-message {
+    .loading-text {
       font-size: 0.95rem;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-      color: var(--text-primary);
-      text-align: center;
-      padding: 0 20px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
 
     .ios-shell {
@@ -254,6 +263,29 @@
       font-weight: 500;
       align-items: center;
       gap: 10px;
+    }
+
+    /* Top Promoted Hazard Stack */
+    #topHazardAlertCard {
+      display: none;
+      background: rgba(40, 16, 20, 0.65);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      gap: 8px;
+    }
+
+    .top-hazard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .top-hazard-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
     }
 
     .grid-2col {
@@ -1127,14 +1159,14 @@
   </style>
 </head>
 <body>
-  <!-- Fullscreen Loading Indicator Overlay -->
-  <div id="loadingOverlay">
-    <div class="loading-spinner"></div>
-    <div class="loading-message">Please wait while we collect all the data.</div>
-  </div>
-
   <canvas id="weatherCanvas"></canvas>
   <div id="lightningFlash"></div>
+
+  <!-- Loading Overlay with Spinning Earth & 50% Transparent Background -->
+  <div id="loadingOverlay" class="visible">
+    <div class="spinning-earth"></div>
+    <div class="loading-text">Collecting Data</div>
+  </div>
 
   <main class="ios-shell" id="weatherShell">
     <header class="ios-header">
@@ -1169,6 +1201,15 @@
       <div class="card-subtext" id="narrative-daily-text" style="font-size: 0.9rem; font-weight: 500;">
         Generating diurnal meteorological model...
       </div>
+    </div>
+
+    <!-- Top Active Hazard & Bioclimatic Alerts (Shows only Orange & Red Warnings) -->
+    <div class="weather-card" id="topHazardAlertCard">
+      <div class="card-title" style="color: #f87171;">
+        <svg viewBox="0 0 24 24" style="fill: #f87171;"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
+        <span>ACTIVE HAZARDS & BIOCLIMATIC ALERTS</span>
+      </div>
+      <div class="top-hazard-list" id="topHazardAlertList"></div>
     </div>
 
     <!-- Climate Card with Dynamic Animated Day/Night 3D Weather Icon -->
@@ -1651,7 +1692,7 @@
     <div class="weather-card satellite-card">
       <div class="satellite-header">
         <div class="card-title" style="margin-bottom: 0;">
-          <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
           <span>WINDY GLOBAL RADAR</span>
         </div>
         <a id="windyExternalLink" href="https://www.windy.com/?13.3671,103.8448,5" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">
@@ -2079,6 +2120,14 @@
     let transitSunsetDate = null;
     let transitNextSunriseDate = null;
 
+    function showLoading(show) {
+      const overlay = document.getElementById("loadingOverlay");
+      if (overlay) {
+        if (show) overlay.classList.add("visible");
+        else overlay.classList.remove("visible");
+      }
+    }
+
     // High-Precision Ephemeris Day/Night Calculator for currently active city
     function isNightTime() {
       const active = getActiveCity();
@@ -2161,6 +2210,68 @@
       return Math.round(R * c);
     }
 
+    // Top Active Hazards and Bioclimatic Alert Collector
+    function syncTopActiveAlerts() {
+      const card = document.getElementById("topHazardAlertCard");
+      const list = document.getElementById("topHazardAlertList");
+      if (!card || !list) return;
+
+      const itemsToScan = [
+        { name: "Mosquito Breeding", valId: "mosquitoVal", subId: "mosquitoSub" },
+        { name: "Humidex / Discomfort", valId: "humidexVal", subId: "humidexSub" },
+        { name: "Wildfires & Hotspots", valId: "fireVal", subId: "fireSub" },
+        { name: "Volcanic Plume", valId: "volcanoVal", subId: "volcanoSub" },
+        { name: "Tectonic Activity", valId: "quakeVal", subId: "quakeSub" },
+        { name: "Tsunami Alerts", valId: "tsunamiVal", subId: "tsunamiSub" },
+        { name: "Flood Risk", valId: "floodVal", subId: "floodSub" },
+        { name: "Tropical Systems", valId: "stormVal", subId: "stormSub" },
+        { name: "Lightning Activity", valId: "lightningVal", subId: "lightningSub" }
+      ];
+
+      function isAlertColor(colorStr) {
+        if (!colorStr) return false;
+        const s = colorStr.toLowerCase();
+        return (
+          s.includes("244, 63, 94") || // accent-red
+          s.includes("239, 68, 68") || // red-500
+          s.includes("251, 146, 60") || // accent-orange
+          s.includes("249, 115, 22") || // orange-500
+          s.includes("f43f5e") ||
+          s.includes("ef4444") ||
+          s.includes("fb923c") ||
+          s.includes("f97316") ||
+          s.includes("orange") ||
+          s.includes("red")
+        );
+      }
+
+      list.innerHTML = "";
+      let foundCount = 0;
+
+      itemsToScan.forEach(item => {
+        const valEl = document.getElementById(item.valId);
+        const subEl = document.getElementById(item.subId);
+        if (!valEl) return;
+
+        const styleColor = valEl.style.color || window.getComputedStyle(valEl).color;
+        if (isAlertColor(styleColor)) {
+          foundCount++;
+          const alertItem = document.createElement("div");
+          alertItem.className = "top-hazard-item";
+          alertItem.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.7);">${item.name}</span>
+              <span style="font-size: 0.82rem; font-weight: 700; color: ${styleColor};">${valEl.innerText}</span>
+            </div>
+            <div style="font-size: 0.72rem; color: rgba(255,255,255,0.85); line-height: 1.3;">${subEl ? subEl.innerText : ''}</div>
+          `;
+          list.appendChild(alertItem);
+        }
+      });
+
+      card.style.display = foundCount > 0 ? "flex" : "none";
+    }
+
     // --- Bioclimatic Snippet Implementation ---
     function calculateHumidex(tempC, humidityPct) {
       const e = (6.112 * Math.pow(10, (7.5 * tempC / (237.7 + tempC)))) * (humidityPct / 100);
@@ -2222,6 +2333,8 @@
         humidexBar.style.background = "#34d399";
         humidexSub.textContent = "Thermal equilibrium within comfortable human metabolic baseline range.";
       }
+
+      syncTopActiveAlerts();
     }
 
     // --- Volcano Hazard Snippet Implementation ---
@@ -2271,6 +2384,8 @@
           subEl.textContent = `Nearest active vent is quiescent (VONA: ${nearest.color}). No ash plume hazard.`;
         }
       }
+
+      syncTopActiveAlerts();
     }
 
     // --- Seismic & Tsunami Hazard Snippet Implementation ---
@@ -2353,6 +2468,8 @@
         quakeVal.textContent = "USGS Stream Standby";
         tsunamiVal.textContent = "No Threat Detected";
       }
+
+      syncTopActiveAlerts();
     }
 
     // --- Fire Hazard & Thermal Hotspots Snippet ---
@@ -2406,9 +2523,10 @@
         fireVal.style.color = "var(--accent-green)";
         fireBar.style.width = "15%";
         fireBar.style.background = "var(--accent-green)";
-        subEl = document.getElementById("fireSub");
-        if (subEl) subEl.textContent = `No active wildfire hotspots in immediate 50 km zone. Ambient relative humidity (${humidity}%) prevents spontaneous flare-ups.`;
+        if (fireSub) fireSub.textContent = `No active wildfire hotspots in immediate 50 km zone. Ambient relative humidity (${humidity}%) prevents spontaneous flare-ups.`;
       }
+
+      syncTopActiveAlerts();
     }
 
     // --- Atmospheric Hazards & Flooding / Squall Logic ---
@@ -2430,7 +2548,7 @@
           const windGust = data.current.wind_gusts_10m || (windSpd * 1.35);
           const pressure = data.current.surface_pressure || 1010;
 
-          checkFireHazards(lat, lon, temp, humidity, windSpd, rainMm);
+          await checkFireHazards(lat, lon, temp, humidity, windSpd, rainMm);
 
           const floodVal = document.getElementById("floodVal");
           const floodBar = document.getElementById("floodBar");
@@ -2517,6 +2635,8 @@
       } catch (err) {
         console.warn("Atmospheric hazards error", err);
       }
+
+      syncTopActiveAlerts();
     }
 
     // --- Lunar Module Setup ---
@@ -4350,31 +4470,27 @@
     }
 
     async function updateCityView() {
-      const overlay = document.getElementById("loadingOverlay");
-      if (overlay) overlay.style.opacity = "1";
-      overlay.style.pointerEvents = "auto";
-
+      showLoading(true);
       const active = getActiveCity();
 
-      active.baselineAvg = await fetchHistoricalBaselineAvg(active.lat, active.lon, active.timezone || "auto");
+      try {
+        // Dynamically fetch and update the historical climate normal for this location using archive daily mean temperatures
+        active.baselineAvg = await fetchHistoricalBaselineAvg(active.lat, active.lon, active.timezone || "auto");
 
-      await fetchSolarEphemeris(active.lat, active.lon);
-      await loadAirQuality();
-      await loadWeatherData();
-      await updateIQAirWidget(active.lat, active.lon);
-      updateWindyWidget(active.lat, active.lon);
-      checkVolcanoHazards(active.lat, active.lon);
-      await Promise.all([
-        checkSeismicAndTsunami(active.lat, active.lon),
-        loadAtmosphericHazards(active.lat, active.lon)
-      ]);
-      updateClock();
-
-      if (overlay) {
-        overlay.style.opacity = "0";
-        setTimeout(() => {
-          overlay.style.pointerEvents = "none";
-        }, 350);
+        await fetchSolarEphemeris(active.lat, active.lon);
+        await loadAirQuality();
+        await loadWeatherData();
+        await updateIQAirWidget(active.lat, active.lon);
+        updateWindyWidget(active.lat, active.lon);
+        checkVolcanoHazards(active.lat, active.lon);
+        await Promise.all([
+          checkSeismicAndTsunami(active.lat, active.lon),
+          loadAtmosphericHazards(active.lat, active.lon)
+        ]);
+        updateClock();
+        syncTopActiveAlerts();
+      } finally {
+        showLoading(false);
       }
     }
 
