@@ -2179,6 +2179,14 @@
     const API_KEY = "jO1pS3yOqaEaPL7KBOFghwmff66C6ehe";
     const iqAirKey = '57810971-c634-4d89-a7cb-4cf2ae9d2b2b';
 
+    // Universal 2-second fetch wrapper that aborts and skips slow network requests
+    function fetchWithTimeout(url, options = {}, timeout = 2000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(timer));
+    }
+
     let cities = [
       { name: "Siem Reap", country: "Cambodia", lat: 13.3671, lon: 103.8448, timezone: "Asia/Bangkok", isCurrent: true, baselineAvg: 32 },
       { name: "Phnom Penh", country: "Cambodia", lat: 11.5564, lon: 104.9282, timezone: "Asia/Bangkok", isCurrent: false, baselineAvg: 33 },
@@ -2324,7 +2332,7 @@
       const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startYear}-01-01&end_date=${endYear}-12-31&daily=temperature_2m_mean&timezone=${encodeURIComponent(timezone)}`;
 
       try {
-        const res = await fetch(archiveUrl);
+        const res = await fetchWithTimeout(archiveUrl, {}, 2000);
         if (!res.ok) throw new Error(`Archive API status ${res.status}`);
         const data = await res.json();
 
@@ -2343,7 +2351,7 @@
           }
         }
       } catch (err) {
-        console.warn("Historical baseline fetch error, using fallback:", err);
+        console.warn("Historical baseline fetch error / timeout (2s), fallback used:", err);
       }
 
       const absLat = Math.abs(lat);
@@ -2501,7 +2509,7 @@
 
       try {
         const pollenUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto`;
-        const res = await fetch(pollenUrl);
+        const res = await fetchWithTimeout(pollenUrl, {}, 2000);
         if (!res.ok) throw new Error("Pollen API failed");
         const data = await res.json();
 
@@ -2616,7 +2624,7 @@
       const tsunamiSub = document.getElementById("tsunamiSub");
 
       try {
-        const res = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson");
+        const res = await fetchWithTimeout("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson", {}, 2000);
         const data = await res.json();
 
         if (data && data.features && data.features.length > 0) {
@@ -2698,7 +2706,7 @@
       let carbonMonoxide = 200;
 
       try {
-        const airRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,carbon_monoxide&timezone=auto`);
+        const airRes = await fetchWithTimeout(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,carbon_monoxide&timezone=auto`, {}, 2000);
         if (airRes.ok) {
           const airData = await airRes.json();
           if (airData && airData.current) {
@@ -2707,7 +2715,7 @@
           }
         }
       } catch (e) {
-        console.warn("Fire aerosol telemetry fallback", e);
+        console.warn("Fire aerosol telemetry fallback / timeout:", e);
       }
 
       const dryFactor = Math.max(0, (100 - humidity) / 10);
@@ -2749,7 +2757,7 @@
       const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ecmwf_ifs025&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,surface_pressure&hourly=cape&daily=precipitation_sum,wind_speed_10m_max&timezone=auto&forecast_days=2`;
 
       try {
-        const res = await fetch(weatherUrl);
+        const res = await fetchWithTimeout(weatherUrl, {}, 2000);
         if (!res.ok) throw new Error("Open-Meteo hazards failed");
         const data = await res.json();
 
@@ -2878,7 +2886,7 @@
           }
         }
       } catch (err) {
-        console.warn("Atmospheric hazards error", err);
+        console.warn("Atmospheric hazards error / timeout (2s):", err);
       }
 
       syncTopActiveAlerts();
@@ -3212,7 +3220,7 @@
 
     async function updateIQAirWidget(lat, lon) {
       try {
-        const response = await fetch(`https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${iqAirKey}`);
+        const response = await fetchWithTimeout(`https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${iqAirKey}`, {}, 2000);
         const result = await response.json();
 
         if (result.status === 'success') {
@@ -3251,7 +3259,7 @@
           }
         }
       } catch (error) {
-        console.error('IQAir fetch error:', error);
+        console.warn('IQAir fetch error or timeout (2s), skipping:', error);
       }
     }
 
@@ -3324,7 +3332,7 @@
           detectRetina: true
         }).addTo(leafletMap);
 
-        fetch('https://api.rainviewer.com/public/weather-maps.json')
+        fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json', {}, 2000)
           .then(res => res.json())
           .then(data => {
             if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
@@ -3335,7 +3343,7 @@
               }).addTo(leafletMap);
             }
           })
-          .catch(e => console.warn("RainViewer Radar fetch error", e));
+          .catch(e => console.warn("RainViewer Radar fetch error / timeout:", e));
 
         L.circleMarker([lat, lon], {
           radius: 6,
@@ -3524,7 +3532,7 @@
     async function fetchSolarEphemeris(lat, lon) {
       try {
         const sunUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=UTC&forecast_days=3`;
-        const res = await fetch(sunUrl);
+        const res = await fetchWithTimeout(sunUrl, {}, 2000);
         const data = await res.json();
 
         if (data.daily && data.daily.sunrise && data.daily.sunset) {
@@ -3542,7 +3550,7 @@
           }
         }
       } catch (err) {
-        console.warn("Error fetching solar ephemeris:", err);
+        console.warn("Error fetching solar ephemeris / timeout (2s):", err);
         const fb = computeSolarTimes(new Date());
         transitSunriseDate = fb.sunrise;
         transitSunsetDate = fb.sunset;
@@ -3782,7 +3790,7 @@
       const active = getActiveCity();
       const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${active.lat}&longitude=${active.lon}&current=us_aqi,pm2_5&hourly=pm2_5,us_aqi&forecast_days=7&timezone=auto`;
       try {
-        const res = await fetch(url);
+        const res = await fetchWithTimeout(url, {}, 2000);
         const data = await res.json();
         latestAqi = Math.round(data.current.us_aqi || 30);
         latestPm25 = (data.current.pm2_5 || 3.0).toFixed(1);
@@ -3793,7 +3801,7 @@
           });
         }
       } catch (err) {
-        console.warn("AQI data unreachable:", err);
+        console.warn("AQI data unreachable or timed out (2s):", err);
       }
     }
 
@@ -3984,18 +3992,19 @@
       let isTomorrow = true;
 
       try {
-        const res = await fetch(tomorrowUrl);
+        const res = await fetchWithTimeout(tomorrowUrl, {}, 2000);
         if (!res.ok) throw new Error(`Tomorrow.io HTTP ${res.status}`);
         data = await res.json();
       } catch (err) {
         isTomorrow = false;
         try {
-          const fallbackRes = await fetch(openMeteoUrl);
+          const fallbackRes = await fetchWithTimeout(openMeteoUrl, {}, 2000);
           if (!fallbackRes.ok) throw new Error(`Open-Meteo HTTP ${fallbackRes.status}`);
           data = await fallbackRes.json();
         } catch (fbErr) {
-          console.error("All weather endpoints failed:", fbErr);
-          document.getElementById("narrative-text").innerText = "Unable to retrieve real-time weather telemetry.";
+          console.warn("Weather endpoints timed out or failed:", fbErr);
+          const narrative = document.getElementById("narrative-text");
+          if (narrative) narrative.innerText = "Weather telemetry temporarily offline.";
           return;
         }
       }
@@ -4537,7 +4546,7 @@
         const errorEl = document.getElementById('eq-error');
 
         try {
-            const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+            const response = await fetchWithTimeout('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson', {}, 2000);
             if (!response.ok) throw new Error('Network response was not ok');
             
             const data = await response.json();
@@ -4548,6 +4557,7 @@
 
             filterAndRenderEq();
         } catch (err) {
+            console.warn("USGS Earthquake fetch failed or timed out (2s):", err);
             loadingEl.style.display = 'none';
             errorEl.style.display = 'block';
         }
@@ -4666,7 +4676,7 @@
 
       searchDebounceTimer = setTimeout(async () => {
         try {
-          const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en&format=json`);
+          const res = await fetchWithTimeout(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en&format=json`, {}, 2000);
           const data = await res.json();
           list.innerHTML = "";
 
@@ -4699,7 +4709,7 @@
             list.innerHTML = `<li style="font-size: 0.8rem; color: var(--text-muted); padding: 8px;">No cities found.</li>`;
           }
         } catch (err) {
-          console.error("Geocoding failed:", err);
+          console.error("Geocoding failed / timeout (2s):", err);
         }
       }, 350);
     }
@@ -4711,29 +4721,44 @@
       goToCity(cities.length - 1);
     }
 
-    async function updateCityView() {
+ async function updateCityView() {
       showLoading(true);
       const active = getActiveCity();
 
-      try {
-        active.baselineAvg = await fetchHistoricalBaselineAvg(active.lat, active.lon, active.timezone || "auto");
+      // 1. Guaranteed failsafe: closes overlay after 2 seconds under all conditions
+      const safetyTimer = setTimeout(() => {
+        showLoading(false);
+      }, 2000);
 
-        await fetchSolarEphemeris(active.lat, active.lon);
-        await loadAirQuality();
-        await loadWeatherData();
-        await updateIQAirWidget(active.lat, active.lon);
+      // 2. Isolates each API call to a max 2-second race so slow calls get skipped
+      const runTask = (taskPromise) =>
+        Promise.race([
+          taskPromise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
+        ]).catch(err => console.warn("Task skipped or timed out:", err));
+
+      try {
+        active.baselineAvg = await fetchHistoricalBaselineAvg(active.lat, active.lon, active.timezone || "auto").catch(() => 32);
+
+        // 3. Parallel non-blocking execution: no single API can stall the sequence
+        await Promise.allSettled([
+          runTask(fetchSolarEphemeris(active.lat, active.lon)),
+          runTask(loadAirQuality()),
+          runTask(loadWeatherData()),
+          runTask(updateIQAirWidget(active.lat, active.lon)),
+          runTask(loadPollenAndAllergens(active.lat, active.lon)),
+          runTask(checkSeismicAndTsunami(active.lat, active.lon)),
+          runTask(loadAtmosphericHazards(active.lat, active.lon))
+        ]);
+
         updateWindyWidget(active.lat, active.lon);
         checkVolcanoHazards(active.lat, active.lon);
-        await loadPollenAndAllergens(active.lat, active.lon);
-        await Promise.all([
-          checkSeismicAndTsunami(active.lat, active.lon),
-          loadAtmosphericHazards(active.lat, active.lon)
-        ]);
         updateClock();
         syncTopActiveAlerts();
       } catch (e) {
         console.error("Error refreshing city view:", e);
       } finally {
+        clearTimeout(safetyTimer);
         showLoading(false);
       }
     }
@@ -4748,3 +4773,4 @@
   </script>
 </body>
 </html>
+     
