@@ -20,18 +20,18 @@
   
   <style>
     :root {
-      --ios-bg-top: #55708c;
-      --ios-bg-mid: #6e869f;
-      --ios-bg-bottom: #8ca3b8;
-      --card-bg: rgba(28, 44, 66, 0.32);
-      --card-border: rgba(255, 255, 255, 0.16);
-      --text-primary: #ffffff;
-      --text-secondary: rgba(255, 255, 255, 0.72);
-      --text-muted: rgba(255, 255, 255, 0.52);
+      --bg: #090d16;
+      --card-bg: rgba(19, 28, 46, 0.75);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --safe: #10b981;
+      --border: #1e293b;
       --card-radius: 20px;
       --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       --moon-glow: rgba(254, 240, 138, 0.3);
-      --accent: #38bdf8;
       --accent-red: #f43f5e;
       --accent-orange: #fb923c;
       --accent-yellow: #facc15;
@@ -50,9 +50,8 @@
     body {
       font-family: var(--font-stack);
       min-height: 100vh;
-      background: linear-gradient(180deg, var(--ios-bg-top) 0%, var(--ios-bg-mid) 42%, var(--ios-bg-bottom) 100%);
-      background-attachment: fixed;
-      color: var(--text-primary);
+      background-color: var(--bg);
+      color: var(--text);
       display: flex;
       justify-content: center;
       padding: 16px 10px 115px 10px;
@@ -205,10 +204,10 @@
       position: relative;
       z-index: 2;
       width: 100%;
-      max-width: 390px;
+      max-width: 420px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       transition: opacity 0.22s ease, transform 0.22s ease;
     }
 
@@ -230,7 +229,7 @@
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--text-secondary);
+      color: var(--muted);
       margin-bottom: 2px;
     }
 
@@ -244,7 +243,7 @@
     .header-date-line {
       font-size: 1.15rem;
       font-weight: 500;
-      color: var(--text-primary);
+      color: var(--text);
       margin-top: 2px;
       letter-spacing: -0.01em;
     }
@@ -271,33 +270,32 @@
 
     .weather-card {
       background: var(--card-bg);
-      backdrop-filter: blur(35px) saturate(170%);
-      -webkit-backdrop-filter: blur(35px) saturate(170%);
-      border: 1px solid var(--card-border);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid var(--border);
       border-radius: var(--card-radius);
-      padding: 12px 10px;
+      padding: 16px;
       position: relative;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      gap: 12px;
     }
 
     .card-title {
-      font-size: 0.68rem;
-      font-weight: 600;
+      font-size: 0.75rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      color: var(--muted);
       display: flex;
       align-items: center;
-      gap: 5px;
-      margin-bottom: 4px;
+      gap: 8px;
     }
 
     .card-title svg {
-      width: 13px;
-      height: 13px;
+      width: 15px;
+      height: 15px;
       fill: currentColor;
       opacity: 0.85;
       flex-shrink: 0;
@@ -314,18 +312,18 @@
     .card-subtext {
       font-size: 0.78rem;
       line-height: 1.35;
-      color: var(--text-primary);
+      color: var(--text);
       margin-top: auto;
     }
 
     .card-subtext-muted {
-      color: var(--text-secondary);
+      color: var(--muted);
     }
 
     .alert-card {
       display: none;
-      background: rgba(239, 68, 68, 0.28);
-      border: 1px solid rgba(239, 68, 68, 0.45);
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
       border-radius: var(--card-radius);
       padding: 12px 14px;
       font-size: 0.84rem;
@@ -367,7 +365,7 @@
       font-weight: 600;
       letter-spacing: 0.07em;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--muted);
       margin: 12px 0 2px 4px;
     }
 
@@ -379,10 +377,10 @@
     }
 
     .climate-metric-item {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 6px 10px;
+      padding: 8px 10px;
     }
 
     .climate-metric-header {
@@ -410,7 +408,7 @@
     .climate-metric-right {
       font-size: 0.75rem;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--muted);
     }
 
     .ios-progress-track {
@@ -429,10 +427,10 @@
     }
 
     .metric-row {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 14px;
-      padding: 12px 14px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -440,7 +438,8 @@
     }
 
     .metric-row:hover {
-      background: rgba(255, 255, 255, 0.07);
+      background: rgba(56, 189, 248, 0.05);
+      border-color: var(--accent);
     }
 
     .metric-header {
@@ -456,7 +455,7 @@
       font-weight: 600;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.48);
+      color: var(--muted);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -472,7 +471,7 @@
     .metric-sub {
       font-size: 0.76rem;
       line-height: 1.35;
-      color: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
     }
 
     .progress-track {
@@ -521,7 +520,7 @@
     }
     .asmc-phase-text {
       font-size: 0.68rem;
-      color: var(--text-muted);
+      color: var(--muted);
       font-weight: 600;
       text-transform: uppercase;
     }
@@ -548,7 +547,7 @@
       flex-direction: column;
       gap: 1px;
       font-size: 0.68rem;
-      color: var(--text-muted);
+      color: var(--muted);
     }
     .asmc-metric-val {
       font-size: 0.78rem;
@@ -574,7 +573,7 @@
       white-space: nowrap;
       background: transparent;
       border: none;
-      color: var(--text-secondary);
+      color: var(--muted);
       font-size: 0.68rem;
       font-weight: 500;
       padding: 5px 8px;
@@ -605,9 +604,9 @@
     .today-period-card {
       min-width: unset;
       width: 100%;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
       padding: 8px 6px;
       display: flex;
       flex-direction: column;
@@ -645,32 +644,33 @@
       font-size: 0.62rem;
       line-height: 1.2;
     }
-    .today-period-row .lbl { color: var(--text-muted); }
+    .today-period-row .lbl { color: var(--muted); }
     .today-period-row .val { font-weight: 600; color: #ffffff; }
 
     .forecast-card-tri {
       width: 100%;
       background: var(--card-bg);
-      backdrop-filter: blur(35px) saturate(170%);
-      -webkit-backdrop-filter: blur(35px) saturate(170%);
-      border: 1px solid var(--card-border);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid var(--border);
       border-radius: var(--card-radius);
-      padding: 10px 8px;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+      padding: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
       color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .tri-title {
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--muted);
       display: flex;
       align-items: center;
-      gap: 5px;
-      margin-bottom: 6px;
-      padding-left: 2px;
+      gap: 8px;
     }
 
     .columns-track-tri {
@@ -683,9 +683,9 @@
     .day-column-tri {
       min-width: unset;
       width: 100%;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
       padding: 6px 3px;
       display: flex;
       flex-direction: column;
@@ -700,7 +700,7 @@
 
     .day-date-tri {
       font-size: 0.54rem;
-      color: var(--text-muted);
+      color: var(--muted);
       text-transform: uppercase;
       margin-top: 1px;
       margin-bottom: 5px;
@@ -735,7 +735,7 @@
       font-weight: 600;
       letter-spacing: 0.02em;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--muted);
       line-height: 1;
     }
 
@@ -935,7 +935,7 @@
     .r2 { left: 11px; bottom: -5px; animation-delay: 0.3s; }
     .r3 { left: 17px; animation-delay: 0.6s; }
 
-    .satellite-card { padding: 12px; overflow: hidden; }
+    .satellite-card { padding: 16px; overflow: hidden; }
     .satellite-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .satellite-link-btn {
       font-size: 0.7rem;
@@ -954,6 +954,7 @@
       position: relative;
       background: #111a28;
       z-index: 1;
+      border: 1px solid var(--border);
     }
     #satelliteMap { width: 100%; height: 100%; }
 
@@ -972,7 +973,7 @@
       display: flex;
       justify-content: space-between;
       font-size: 0.78rem;
-      color: var(--text-secondary);
+      color: var(--muted);
       padding: 0 8px;
       margin-top: -6px;
     }
@@ -988,7 +989,7 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     .wind-row:last-child { border-bottom: none; }
-    .wind-label { color: var(--text-secondary); font-weight: 400; }
+    .wind-label { color: var(--muted); font-weight: 400; }
     .wind-value { font-weight: 500; }
     .compass-container { width: 100px; height: 100px; position: relative; flex-shrink: 0; }
     .compass-dial { width: 100%; height: 100%; }
@@ -996,7 +997,7 @@
 
     .sun-status-desc {
       font-size: 0.78rem;
-      color: var(--text-secondary);
+      color: var(--muted);
       margin-top: 2px;
       font-weight: 500;
     }
@@ -1033,7 +1034,7 @@
       font-size: 0.68rem;
       font-weight: 600;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--muted);
       letter-spacing: 0.05em;
     }
     .sun-time-val {
@@ -1075,7 +1076,7 @@
       padding: 2px 8px;
       border-radius: 10px;
       font-weight: 500;
-      border: 1px solid var(--card-border);
+      border: 1px solid var(--border);
     }
     .badge-ill {
       color: #fef08a;
@@ -1092,15 +1093,15 @@
       margin-top: 2px;
     }
     .moon-detail-card {
-      background: rgba(10, 16, 30, 0.45);
-      border: 1px solid var(--card-border);
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
       border-radius: 10px;
       padding: 8px;
       text-align: center;
     }
     .moon-detail-card .label {
       font-size: 0.65rem;
-      color: var(--text-muted);
+      color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 3px;
@@ -1115,17 +1116,142 @@
       margin-top: 2px;
     }
 
+    /* Storm Tracker Widget Styles embedded from storm.html */
+    .storm-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 250px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .storm-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .storm-card:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .storm-info-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .storm-name-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .storm-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+    }
+
+    .storm-basin {
+      font-size: 0.65rem;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .strength-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-safe { background: rgba(16, 185, 129, 0.15); color: var(--safe); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .storm-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      font-size: 0.73rem;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+
+    .storm-metrics strong {
+      color: var(--text);
+      display: block;
+      font-size: 0.73rem;
+    }
+
+    .local-effect-note {
+      font-size: 0.71rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      color: var(--warning);
+      background: rgba(245, 158, 11, 0.05);
+      padding: 5px 8px;
+      border-radius: 6px;
+      border-left: 3px solid var(--warning);
+    }
+
+    .click-hint {
+      font-size: 0.65rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .map-wrapper {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+    }
+
+    .map-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .footer-note {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.2;
+    }
+
     .ios-dock {
       position: fixed;
       bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
       width: calc(100% - 24px);
-      max-width: 390px;
-      background: rgba(26, 38, 54, 0.78);
-      backdrop-filter: blur(30px) saturate(180%);
-      -webkit-backdrop-filter: blur(30px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      max-width: 420px;
+      background: rgba(19, 28, 46, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--border);
       border-radius: 99px;
       padding: 8px 14px;
       display: flex;
@@ -1203,10 +1329,10 @@
     .city-modal {
       position: relative;
       width: 100%;
-      max-width: 390px;
-      background: rgba(22, 33, 49, 0.98);
+      max-width: 420px;
+      background: #131c2e;
       border-radius: 28px 28px 0 0;
-      border: 1px solid var(--card-border);
+      border: 1px solid var(--border);
       padding: 16px 18px 32px 18px;
       box-shadow: 0 -10px 40px rgba(0,0,0,0.7);
       display: flex;
@@ -1234,8 +1360,8 @@
     .search-box-wrapper { position: relative; margin-bottom: 10px; flex-shrink: 0; }
     .search-input {
       width: 100%;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
       border-radius: 10px;
       padding: 9px 12px 9px 36px;
       font-size: 0.88rem;
@@ -1245,8 +1371,8 @@
       transition: border-color 0.2s, background 0.2s;
     }
     .search-input:focus {
-      background: rgba(255, 255, 255, 0.14);
-      border-color: var(--accent-blue);
+      background: rgba(15, 23, 42, 1);
+      border-color: var(--accent);
     }
     .search-input::placeholder { color: rgba(255, 255, 255, 0.45); }
     .search-icon-inside {
@@ -1279,17 +1405,17 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: 10px 12px;
       cursor: pointer;
     }
     .city-item-left { display: flex; flex-direction: column; gap: 2px; flex: 1; }
     .city-item-name { font-size: 0.95rem; font-weight: 600; }
-    .city-item-country { font-size: 0.74rem; color: var(--text-secondary); }
+    .city-item-country { font-size: 0.74rem; color: var(--muted); }
     .city-remove-btn { background: transparent; border: none; color: #f87171; padding: 4px; font-size: 1rem; cursor: pointer; }
-    .search-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 6px 0 3px 4px; flex-shrink: 0; }
+    .search-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 6px 0 3px 4px; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -1362,7 +1488,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0 8px 0;">
         <div>
           <div style="font-size: 2.8rem; font-weight: 400; line-height: 1; letter-spacing: -0.03em;" id="unified-cur-temp">--°</div>
-          <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 3px;" id="unified-condition">Loading...</div>
+          <div style="font-size: 0.9rem; color: var(--muted); margin-top: 3px;" id="unified-condition">Loading...</div>
         </div>
 
         <div class="climate-hero-icon" id="climate-3d-icon-box">
@@ -1372,11 +1498,11 @@
 
         <div style="text-align: right;">
           <div style="font-size: 1.5rem; font-weight: 500; color: #ffffff;" id="unified-feels">--°</div>
-          <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Feels Like</div>
+          <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">Feels Like</div>
         </div>
       </div>
 
-      <div style="font-size: 0.8rem; color: var(--text-primary); margin: 3px 0 8px 0;" id="unified-humidity-impact">
+      <div style="font-size: 0.8rem; color: var(--text); margin: 3px 0 8px 0;" id="unified-humidity-impact">
         Calculating atmospheric thermal index...
       </div>
 
@@ -1395,7 +1521,7 @@
           </div>
         </div>
 
-        <!-- UV Index Bar with Solar UV Burn Time (MED) -->
+        <!-- UV Index Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1409,7 +1535,7 @@
           </div>
         </div>
 
-        <!-- Humidity Bar (IQAir) -->
+        <!-- Humidity Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1479,7 +1605,7 @@
           </div>
         </div>
 
-        <!-- Particulate Matter PM10 Bar (Open-Meteo) -->
+        <!-- Particulate Matter PM10 Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1493,7 +1619,7 @@
           </div>
         </div>
 
-        <!-- Sulphur Dioxide SO2 Bar (Open-Meteo) -->
+        <!-- Sulphur Dioxide SO2 Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1510,21 +1636,23 @@
 
       <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px;">
         <div>
-          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Daily Range</div>
+          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 2px;">Daily Range</div>
           <div style="font-size: 0.88rem; font-weight: 600;">
             <span id="unified-day-high" style="color: #ffffff;">H: --°</span>
-            <span id="unified-day-low" style="color: var(--text-secondary); margin-left: 6px;">L: --°</span>
+            <span id="unified-day-low" style="color: var(--muted); margin-left: 6px;">L: --°</span>
           </div>
         </div>
         <div>
-          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;" id="historicalContextTitle">Historical Mean For Today</div>
+          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 2px;" id="historicalContextTitle">Historical Mean For Today</div>
           <div style="font-size: 0.84rem; font-weight: 500;" id="unified-avg-summary">
             <span id="unified-avg-badge" style="background: rgba(251, 146, 60, 0.25); color: #fb923c; padding: 1px 6px; border-radius: 4px; font-weight: 600;">+0°</span>
-            <span style="color: var(--text-secondary); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">avg 32°</span>
+            <span style="color: var(--muted); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">avg 32°</span>
           </div>
         </div>
       </div>
     </div>
+
+
 
     <!-- 24-Hour Hourly Projection -->
     <div class="weather-card">
@@ -1817,7 +1945,7 @@
           <span>EARTHQUAKES TODAY</span>
         </div>
         <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.2); padding: 3px 8px; border-radius: 6px;">
-          <span style="font-size: 0.62rem; color: var(--text-muted); font-weight: 600;">MAG ></span>
+          <span style="font-size: 0.62rem; color: var(--muted); font-weight: 600;">MAG ></span>
           <select id="mag-filter" style="background: transparent; color: white; border: none; font-size: 0.72rem; font-weight: 700; outline: none; cursor: pointer; padding-left: 2px;">
             <option value="1" style="color: black;">1</option>
             <option value="2" style="color: black;">2</option>
@@ -1833,19 +1961,19 @@
       </div>
 
       <div id="earthquake-widget-body" style="margin-top: 10px;">
-        <div id="eq-loading" style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 8px 0;">
+        <div id="eq-loading" style="text-align: center; color: var(--muted); font-size: 0.8rem; padding: 8px 0;">
            Fetching latest seismic data...
         </div>
         <div id="eq-error" style="display: none; text-align: center; color: #f87171; font-size: 0.8rem; padding: 8px 0;">
            Failed to load earthquake data.
         </div>
-        <div id="eq-no-data" style="display: none; text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 8px 0;">
+        <div id="eq-no-data" style="display: none; text-align: center; color: var(--muted); font-size: 0.8rem; padding: 8px 0;">
            No earthquakes greater than this magnitude recorded today. 🎉
         </div>
         <ul id="earthquake-list" style="display: none; list-style: none; max-height: 220px; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 8px;">
         </ul>
       </div>
-      <div style="font-size: 0.65rem; color: var(--text-muted); display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">
+      <div style="font-size: 0.65rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">
         <span>Source: USGS API</span>
         <span id="eq-update-time"></span>
       </div>
@@ -1869,19 +1997,31 @@
       </div>
     </div>
 
-    <!-- Windy Map Iframe Integration -->
-    <div class="weather-card satellite-card">
-      <div class="satellite-header">
-        <div class="card-title" style="margin-bottom: 0;">
-          <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
-          <span>WINDY GLOBAL RADAR</span>
+    <!-- Global Storm Tracker Widget Integrated Here -->
+    <div class="weather-card">
+      <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+        <div class="widget-title">
+          <div class="card-title" style="margin-bottom: 2px;">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-10 10c0 4.9 3.5 8.9 8.2 9.8l.8.2v-6.2H9v-2h2V12a3 3 0 0 1 3-3h2v2h-2a1 1 0 0 0-1 1v1.8h3v2h-3V22c5.5-.5 9.8-5.1 9.8-10.7A10 10 0 0 0 12 2z"/></svg>
+            <span>STORM TRACKER</span>
+          </div>
+          <p id="subtext" style="font-size: 0.75rem; color: var(--muted);">📍 Current Location Tracking Active</p>
         </div>
-        <a id="windyExternalLink" href="https://www.windy.com/?13.3671,103.8448,5" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">
-          Open in Windy ↗
-        </a>
       </div>
-      <div class="satellite-map-wrapper" style="height: 340px;">
-        <iframe id="windyIframe" width="100%" height="100%" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=5&overlay=wind&product=ecmwf&level=surface&lat=13.3671&lon=103.8448&detailLat=13.3671&detailLon=103.8448&pressure=true&message=true" frameborder="0"></iframe>
+
+      <div class="storm-list" id="stormListContainer">
+        <!-- Populated dynamically -->
+      </div>
+
+      <div class="map-wrapper">
+        <iframe id="stormWindyFrame" src="https://embed.windy.com/embed2.html?lat=13.363&lon=103.856&zoom=4&level=surface&overlay=wind&menu=false&message=false&marker=true&calendar=now&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C" title="Windy Map"></iframe>
+      </div>
+
+      <div class="footer-note">
+      </div>
+    </div>
+
+    
       </div>
     </div>
 
@@ -1936,7 +2076,7 @@
 
       <div class="weather-card">
         <div class="card-title">
-          <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5zm0 12.5c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5zm0 12.5c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6 z"/></svg>
           <span>VISIBILITY</span>
         </div>
         <div class="card-large-val" id="val-visibility">-- km</div>

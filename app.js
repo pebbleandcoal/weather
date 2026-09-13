@@ -51,6 +51,117 @@ let latestSo2 = "0.0";
 let hourlyPm10Map = {};
 let hourlySo2Map = {};
 
+// Global Storm Tracker data & integration logic
+const globalStorms = [
+    { name: "Tropical Storm Norbert", basin: "Eastern Pacific", type: "Tropical Storm", winds: "85 km/h", movement: "W @ 16 km/h", lat: 19.4, lon: -145.2 },
+    { name: "Post-Tropical Cyclone Lowell", basin: "Central Pacific", type: "Post-Tropical", winds: "80 km/h", movement: "W @ 18 km/h", lat: 29.0, lon: -169.9 },
+    { name: "Invest 97E", basin: "Eastern Pacific", type: "Disturbance", winds: "40 km/h", movement: "N/A", lat: 16.3, lon: -114.5 }
+];
+
+function calculateStormDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return Math.round(R * c);
+}
+
+function renderStormTrackerWidget(focusStorm = null) {
+    const container = document.getElementById('stormListContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const active = getActiveCity();
+    const curLat = active.lat;
+    const curLon = active.lon;
+
+    let targetLat = curLat;
+    let targetLon = curLon;
+    let targetZoom = 5;
+
+    if (focusStorm) {
+        let lon1 = curLon;
+        let lon2 = focusStorm.lon;
+        
+        if (Math.abs(lon1 - lon2) > 180) {
+            if (lon1 < lon2) lon1 += 360;
+            else lon2 += 360;
+        }
+
+        targetLat = (curLat + focusStorm.lat) / 2;
+        targetLon = (lon2 + lon1) / 2;
+        if (targetLon > 180) targetLon -= 360;
+        if (targetLon < -180) targetLon += 360;
+
+        const distanceSpan = calculateStormDistance(curLat, curLon, focusStorm.lat, focusStorm.lon);
+        
+        if (distanceSpan > 10000) targetZoom = 2;
+        else if (distanceSpan > 5000) targetZoom = 3;
+        else if (distanceSpan > 2000) targetZoom = 4;
+        else if (distanceSpan > 800) targetZoom = 5;
+        else targetZoom = 6;
+    }
+
+    globalStorms.forEach(storm => {
+        const distKm = calculateStormDistance(curLat, curLon, storm.lat, storm.lon);
+        
+        let effectColor = "var(--warning, #f59e0b)";
+        let effectBg = "rgba(245, 158, 11, 0.05)";
+        let effectBorder = "var(--warning, #f59e0b)";
+        let badgeClass = "";
+        let effectText = `Moderate distance; minimal direct interference with ${active.name}.`;
+
+        if (distKm < 500) {
+            effectText = `High Alert: Direct proximity zone to ${active.name}!`;
+            effectColor = "var(--danger, #ef4444)";
+            effectBg = "rgba(239, 68, 68, 0.05)";
+            effectBorder = "var(--danger, #ef4444)";
+            badgeClass = "badge-danger";
+        } else if (distKm > 6000) {
+            effectText = `Distant system (${Math.round(distKm).toLocaleString()} km away).`;
+            effectColor = "var(--safe, #10b981)";
+            effectBg = "rgba(16, 185, 129, 0.05)";
+            effectBorder = "var(--safe, #10b981)";
+            badgeClass = "badge-safe";
+        }
+
+        const card = document.createElement('div');
+        card.className = 'storm-card';
+        card.innerHTML = `
+            <div class="storm-info-top">
+                <div class="storm-name-box">
+                    <span class="storm-name">${storm.name}</span>
+                    <span class="storm-basin">${storm.basin}</span>
+                </div>
+                <span class="strength-badge ${badgeClass}">${storm.type}</span>
+            </div>
+            <div class="storm-metrics">
+                <div>Max Winds: <strong>${storm.winds}</strong></div>
+                <div>Movement: <strong>${storm.movement}</strong></div>
+                <div>Distance: <strong>~${distKm.toLocaleString()} km</strong></div>
+            </div>
+            <div class="local-effect-note" style="color: ${effectColor}; background: ${effectBg}; border-left-color: ${effectBorder};">
+                <span>⚠️ ${effectText}</span>
+                <span class="click-hint">Center Map ↗</span>
+            </div>
+        `;
+        
+        card.addEventListener('click', () => {
+            renderStormTrackerWidget(storm);
+        });
+
+        container.appendChild(card);
+    });
+
+    const iframe = document.getElementById('stormWindyFrame');
+    if (iframe) {
+        iframe.src = `https://embed.windy.com/embed2.html?lat=${targetLat.toFixed(3)}&lon=${targetLon.toFixed(3)}&zoom=${targetZoom}&level=surface&overlay=wind&menu=false&message=false&marker=true&calendar=now&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C`;
+    }
+}
+
 function showLoading(show) {
   const overlay = document.getElementById("loadingOverlay");
   if (overlay) {
@@ -721,7 +832,7 @@ function updateAsmcHazeWidget(lat, lon, currentPm25, humidity, rainMm) {
   if (!card) return;
 
   const now = new Date();
-  const month = now.getMonth() + 1; // 1-12
+  const month = now.getMonth() + 1;
 
   const isMekongRegion = lat >= 8 && lat <= 26 && lon >= 92 && lon <= 110;
   const isDryBurningSeason = (month >= 1 && month <= 5);
@@ -2196,6 +2307,7 @@ function processTomorrowData(data) {
   renderActiveDailyChart();
   renderTodayHourlySegments();
   renderThreeDayProjectionWidget();
+  renderStormTrackerWidget();
 }
 
 function processOpenMeteoData(data) {
@@ -2336,6 +2448,7 @@ function processOpenMeteoData(data) {
   renderActiveDailyChart();
   renderTodayHourlySegments();
   renderThreeDayProjectionWidget();
+  renderStormTrackerWidget();
 }
 
 let animId = null;
@@ -2692,7 +2805,7 @@ function filterAndRenderEq() {
                 </span>
                 <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     <div style="font-size: 0.8rem; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${props.place}">${props.place}</div>
-                    <div style="font-size: 0.65rem; color: var(--text-muted);">${time}</div>
+                    <div style="font-size: 0.65rem; color: var(--muted);">${time}</div>
                 </div>
             </div>
             <a href="${props.url}" target="_blank" style="font-size: 0.72rem; color: #38bdf8; text-decoration: none; font-weight: 500; flex-shrink: 0; margin-left: 8px;">
@@ -2807,7 +2920,7 @@ function handleCitySearch(query) {
         });
       } else {
         searchSection.style.display = "block";
-        list.innerHTML = `<li style="font-size: 0.8rem; color: var(--text-muted); padding: 8px;">No matching cities found.</li>`;
+        list.innerHTML = `<li style="font-size: 0.8rem; color: var(--muted); padding: 8px;">No matching cities found.</li>`;
       }
     } catch (err) {
       console.error("Geocoding request failed or timed out:", err);
