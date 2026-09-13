@@ -491,6 +491,71 @@
       transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
     }
 
+    .asmc-card {
+      background: rgba(249, 115, 22, 0.08);
+      border: 1px solid rgba(249, 115, 22, 0.35);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .asmc-card.standdown {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.14);
+    }
+    .asmc-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .asmc-level-badge {
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #ea580c;
+      color: #000;
+    }
+    .asmc-phase-text {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .asmc-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.25;
+    }
+    .asmc-desc {
+      font-size: 0.74rem;
+      line-height: 1.35;
+      color: rgba(255, 255, 255, 0.78);
+    }
+    .asmc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .asmc-metric-item {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+    .asmc-metric-val {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
     .segmented-control {
       display: flex;
       background: rgba(0, 0, 0, 0.18);
@@ -1413,6 +1478,34 @@
             <div class="ios-progress-fill" id="bar-cape" style="background: #34d399; width: 4%;"></div>
           </div>
         </div>
+
+        <!-- Particulate Matter PM10 Bar (Open-Meteo) -->
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-pm10" style="background: #34d399;"></span>
+              <span id="label-pm10">PM10: Good</span>
+            </div>
+            <div class="climate-metric-right" id="metric-pm10">PM10: 0.0 µg/m³</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-pm10" style="background: #34d399; width: 10%;"></div>
+          </div>
+        </div>
+
+        <!-- Sulphur Dioxide SO2 Bar (Open-Meteo) -->
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-so2" style="background: #34d399;"></span>
+              <span id="label-so2">Sulphur Dioxide: Low</span>
+            </div>
+            <div class="climate-metric-right" id="metric-so2">SO₂: 0.0 µg/m³</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-so2" style="background: #34d399; width: 10%;"></div>
+          </div>
+        </div>
       </div>
 
       <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px;">
@@ -1506,6 +1599,8 @@
         <button class="seg-btn" onclick="switchHourlyView('humidity')">Humidity</button>
         <button class="seg-btn" onclick="switchHourlyView('uv')">UV</button>
         <button class="seg-btn" onclick="switchHourlyView('pm25')">PM 2.5</button>
+        <button class="seg-btn" onclick="switchHourlyView('pm10')">PM 10</button>
+        <button class="seg-btn" onclick="switchHourlyView('so2')">SO₂</button>
         <button class="seg-btn" onclick="switchHourlyView('wind')">Wind</button>
         <button class="seg-btn" onclick="switchHourlyView('rain')">Rain</button>
         <button class="seg-btn" onclick="switchHourlyView('solar')">⚡ Solar</button>
@@ -1703,6 +1798,8 @@
         <button class="seg-btn" onclick="switchDailyView('humidity')">Humidity</button>
         <button class="seg-btn" onclick="switchDailyView('uv')">UV</button>
         <button class="seg-btn" onclick="switchDailyView('pm25')">PM 2.5</button>
+        <button class="seg-btn" onclick="switchDailyView('pm10')">PM 10</button>
+        <button class="seg-btn" onclick="switchDailyView('so2')">SO₂</button>
         <button class="seg-btn" onclick="switchDailyView('wind')">Wind</button>
         <button class="seg-btn" onclick="switchDailyView('rain')">Rain</button>
         <button class="seg-btn" onclick="switchDailyView('solar')">⚡ Solar</button>
@@ -2156,6 +2253,37 @@
         </div>
         <div class="metric-sub" id="lightningSub">
           Scanning convective cells and atmospheric instability (CAPE)...
+        </div>
+      </div>
+
+      <!-- 9. Northern Mekong Sub-Region Haze & Fire Advisory (ASMC) -->
+      <div class="asmc-card" id="asmcWidgetCard">
+        <div class="asmc-badge-row">
+          <span id="asmcLevelBadge" class="asmc-level-badge">Level 0: Stand Down</span>
+          <span id="asmcSeasonPhase" class="asmc-phase-text">Wet Season Monsoon</span>
+        </div>
+        <div id="asmcAlertTitle" class="asmc-title">Regional Transboundary Haze Advisory</div>
+        <div id="asmcAlertDesc" class="asmc-desc">
+          Evaluating seasonal fire weather, agricultural clearing patterns, and boundary layer atmospheric ventilation...
+        </div>
+
+        <div class="asmc-grid">
+          <div class="asmc-metric-item">
+            Prevailing Regime
+            <span class="asmc-metric-val" id="asmcRegimeVal">Southwest Monsoon</span>
+          </div>
+          <div class="asmc-metric-item">
+            Regional Ground PM2.5
+            <span class="asmc-metric-val" id="asmcGroundPmVal">Baseline (&lt; 25 µg/m³)</span>
+          </div>
+          <div class="asmc-metric-item">
+            Inversion Cap Ceiling
+            <span class="asmc-metric-val" id="asmcCapVal">Dispersed / Free Flow</span>
+          </div>
+          <div class="asmc-metric-item">
+            Mekong Basin Hotspots
+            <span class="asmc-metric-val" id="asmcHotspotVal">Suppressed / Low</span>
+          </div>
         </div>
       </div>
     </div>

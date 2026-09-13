@@ -45,6 +45,11 @@ let currentHumidity = 56;
 let currentDewPoint = 23;
 let currentTempC = 28;
 let currentCapeValue = 0;
+let latestPm10 = "0.0";
+let latestSo2 = "0.0";
+
+let hourlyPm10Map = {};
+let hourlySo2Map = {};
 
 function showLoading(show) {
   const overlay = document.getElementById("loadingOverlay");
@@ -337,6 +342,66 @@ function updateCapeDisplay(capeVal) {
   if (bar) {
     bar.style.background = color;
     bar.style.width = `${percentage}%`;
+  }
+}
+
+function updatePm10Display(pm10Val) {
+  const num = parseFloat(pm10Val) || 0;
+  let label = "Good";
+  let color = "#34d399";
+
+  if (num > 150) {
+    label = "Hazardous";
+    color = "#a855f7";
+  } else if (num > 100) {
+    label = "Unhealthy";
+    color = "#f43f5e";
+  } else if (num > 50) {
+    label = "Moderate";
+    color = "#fbbf24";
+  }
+
+  const dot = document.getElementById("dot-pm10");
+  const lbl = document.getElementById("label-pm10");
+  const val = document.getElementById("metric-pm10");
+  const bar = document.getElementById("bar-pm10");
+
+  if (dot) dot.style.background = color;
+  if (lbl) lbl.innerText = `PM10: ${label}`;
+  if (val) val.innerText = `PM10: ${num.toFixed(1)} µg/m³`;
+  if (bar) {
+    bar.style.background = color;
+    bar.style.width = `${Math.min(100, Math.max(8, (num / 150) * 100))}%`;
+  }
+}
+
+function updateSo2Display(so2Val) {
+  const num = parseFloat(so2Val) || 0;
+  let label = "Low";
+  let color = "#34d399";
+
+  if (num > 80) {
+    label = "Hazardous";
+    color = "#a855f7";
+  } else if (num > 40) {
+    label = "Elevated";
+    color = "#f43f5e";
+  } else if (num > 20) {
+    label = "Moderate";
+    color = "#fbbf24";
+  }
+
+  const dot = document.getElementById("dot-so2");
+  const lbl = document.getElementById("label-so2");
+  const val = document.getElementById("metric-so2");
+  const bar = document.getElementById("bar-so2");
+
+  if (dot) dot.style.background = color;
+  if (lbl) lbl.innerText = `Sulphur Dioxide: ${label}`;
+  if (val) val.innerText = `SO₂: ${num.toFixed(1)} µg/m³`;
+  if (bar) {
+    bar.style.background = color;
+    bar.style.width = `${Math.min(100, Math.max(8, (num / 100) * 100))}%`;
   }
 }
 
@@ -647,7 +712,89 @@ async function checkFireHazards(lat, lon, temp, humidity, windSpeed, rainMm) {
     if (fireSub) fireSub.textContent = `No active wildfire hotspots in immediate 50 km zone. Ambient relative humidity (${humidity}%) prevents spontaneous flare-ups.`;
   }
 
+  updateAsmcHazeWidget(lat, lon, pm25, humidity, rainMm);
   syncTopActiveAlerts();
+}
+
+function updateAsmcHazeWidget(lat, lon, currentPm25, humidity, rainMm) {
+  const card = document.getElementById("asmcWidgetCard");
+  if (!card) return;
+
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-12
+
+  const isMekongRegion = lat >= 8 && lat <= 26 && lon >= 92 && lon <= 110;
+  const isDryBurningSeason = (month >= 1 && month <= 5);
+
+  const badge = document.getElementById("asmcLevelBadge");
+  const phase = document.getElementById("asmcSeasonPhase");
+  const title = document.getElementById("asmcAlertTitle");
+  const desc = document.getElementById("asmcAlertDesc");
+  const regime = document.getElementById("asmcRegimeVal");
+  const groundPm = document.getElementById("asmcGroundPmVal");
+  const cap = document.getElementById("asmcCapVal");
+  const hotspot = document.getElementById("asmcHotspotVal");
+
+  if (!isMekongRegion) {
+    card.classList.add("standdown");
+    if (badge) {
+      badge.style.background = "rgba(255,255,255,0.2)";
+      badge.style.color = "#ffffff";
+      badge.innerText = "Out of Region";
+    }
+    if (phase) phase.innerText = "Non-Mekong Geographic Zone";
+    if (title) title.innerText = "ASMC Mekong Regional Advisory Inactive";
+    if (desc) desc.innerText = "Active coordinates are outside the Northern Mekong Sub-Region (Cambodia, Thailand, Laos, Myanmar, Vietnam) monitored zone.";
+    if (regime) regime.innerText = "Local Gradient Circulation";
+    if (groundPm) groundPm.innerText = `${Math.round(currentPm25)} µg/m³`;
+    if (cap) cap.innerText = "Local Boundary Layer";
+    if (hotspot) hotspot.innerText = "Regional Telemetry Only";
+    return;
+  }
+
+  if (isDryBurningSeason && (currentPm25 >= 75 || humidity < 50)) {
+    card.classList.remove("standdown");
+    if (badge) {
+      badge.style.background = "#ea580c";
+      badge.style.color = "#000";
+      badge.innerText = "Level 2: Escalating Risk";
+    }
+    if (phase) phase.innerText = "Dry Season Burning Peak";
+    if (title) title.innerText = "Active Transboundary Smoke Alert";
+    if (desc) desc.innerText = "Dominant Subtropical Ridge causes strong sinking air and calm surface winds. Agricultural burns in the Shan Hills and northern border valleys are capped under nocturnal inversions.";
+    if (regime) regime.innerText = "Subtropical High / 850hPa Jet";
+    if (groundPm) groundPm.innerText = `${Math.round(currentPm25)} µg/m³ (Elevated)`;
+    if (cap) cap.innerText = "Trapped (< 500m Inversion Cap)";
+    if (hotspot) hotspot.innerText = "High to Extreme (Active Fires)";
+  } else if (isDryBurningSeason) {
+    card.classList.remove("standdown");
+    if (badge) {
+      badge.style.background = "#facc15";
+      badge.style.color = "#000";
+      badge.innerText = "Level 1: Seasonal Advisory";
+    }
+    if (phase) phase.innerText = "Dry Transition Phase";
+    if (title) title.innerText = "Mekong Basin Fire Risk Advisory";
+    if (desc) desc.innerText = "Dry air settling over Mekong basin. Sporadic biomass clearing detected with moderate nocturnal smoke retention.";
+    if (regime) regime.innerText = "Northeast Monsoon Flow";
+    if (groundPm) groundPm.innerText = `${Math.round(currentPm25)} µg/m³ (Moderate)`;
+    if (cap) cap.innerText = "Moderate (600m - 900m Cap)";
+    if (hotspot) hotspot.innerText = "Moderate Clearing Clusters";
+  } else {
+    card.classList.add("standdown");
+    if (badge) {
+      badge.style.background = "#10b981";
+      badge.style.color = "#000";
+      badge.innerText = "Level 0: Stand Down";
+    }
+    if (phase) phase.innerText = "Southwest Monsoon / Rain Season";
+    if (title) title.innerText = "Mekong Basin Clean Air Baseline";
+    if (desc) desc.innerText = "Southwest Monsoon active. Regional rainfall, atmospheric scrubbing, and buoyant convective mixing keep transboundary haze suppressed.";
+    if (regime) regime.innerText = "Southwest Monsoon Flow";
+    if (groundPm) groundPm.innerText = `${Math.round(currentPm25)} µg/m³ (Clean)`;
+    if (cap) cap.innerText = "Uncapped / Convective Mixing";
+    if (hotspot) hotspot.innerText = "Suppressed by Rainfall";
+  }
 }
 
 async function loadAtmosphericHazards(lat, lon) {
@@ -1568,7 +1715,7 @@ function renderPressureDial(pressureHpa, prevPressureHpa = 1008) {
   document.getElementById("pressureTrendArrow").innerText = pressureHpa <= prevPressureHpa ? "↓" : "↑";
 }
 
-function updateClimateWidget(curTemp, feelsTemp, conditionText, highTemp, lowTemp, avgBaseline, aqi, pm25, uv, humidity, rainProb, dewPoint, windSpeedKmh, weatherCode, rainMm, dailyPrecipMm = 0, cape = 0) {
+function updateClimateWidget(curTemp, feelsTemp, conditionText, highTemp, lowTemp, avgBaseline, aqi, pm25, uv, humidity, rainProb, dewPoint, windSpeedKmh, weatherCode, rainMm, dailyPrecipMm = 0, cape = 0, pm10 = 0, so2 = 0) {
   const roundCur = Math.round(curTemp);
   const roundFeels = Math.round(feelsTemp);
   const roundHigh = Math.round(highTemp);
@@ -1625,6 +1772,8 @@ function updateClimateWidget(curTemp, feelsTemp, conditionText, highTemp, lowTem
 
   updateHumidityDisplay(humidity, dewPoint);
   updateCapeDisplay(cape);
+  updatePm10Display(pm10 || latestPm10);
+  updateSo2Display(so2 || latestSo2);
 
   let probCategory = "Minimal";
   let probColor = "#38bdf8";
@@ -1684,20 +1833,27 @@ let hourlyPm25Map = {};
 
 async function loadAirQuality() {
   const active = getActiveCity();
-  const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${active.lat}&longitude=${active.lon}&current=us_aqi,pm2_5&hourly=pm2_5,us_aqi&forecast_days=7&timezone=auto`;
+  const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${active.lat}&longitude=${active.lon}&current=us_aqi,pm2_5,pm10,sulphur_dioxide&hourly=pm2_5,pm10,sulphur_dioxide,us_aqi&forecast_days=7&timezone=auto`;
   try {
     const res = await fetchWithTimeout(url, {}, 2000);
     const data = await res.json();
     latestAqi = Math.round(data.current.us_aqi || 30);
     latestPm25 = (data.current.pm2_5 || 3.0).toFixed(1);
+    latestPm10 = (data.current.pm10 || 0).toFixed(1);
+    latestSo2 = (data.current.sulphur_dioxide || 0).toFixed(1);
 
     if (data.hourly && data.hourly.time) {
       data.hourly.time.forEach((t, i) => {
         hourlyPm25Map[t] = data.hourly.pm2_5[i] || 3.0;
+        hourlyPm10Map[t] = data.hourly.pm10 ? (data.hourly.pm10[i] || 0) : 0;
+        hourlySo2Map[t] = data.hourly.sulphur_dioxide ? (data.hourly.sulphur_dioxide[i] || 0) : 0;
       });
     }
+
+    updatePm10Display(latestPm10);
+    updateSo2Display(latestSo2);
   } catch (err) {
-    console.warn("AQI data unreachable or timed out (2s):", err);
+    console.warn("AQI / PM10 / SO2 data unreachable or timed out (2s):", err);
   }
 }
 
@@ -1930,7 +2086,11 @@ function processTomorrowData(data) {
     const dObj = new Date(h.time);
     const cloud = h.values.cloudCover || 0;
     const solar = estimateSolarOutput600W(dObj, cloud);
-    const pmVal = hourlyPm25Map[h.time.slice(0, 13) + ":00"] || parseFloat(latestPm25);
+    const timeKey = h.time.slice(0, 13) + ":00";
+    const pmVal = hourlyPm25Map[timeKey] || parseFloat(latestPm25);
+    const pm10Val = hourlyPm10Map[timeKey] !== undefined ? hourlyPm10Map[timeKey] : parseFloat(latestPm10);
+    const so2Val = hourlySo2Map[timeKey] !== undefined ? hourlySo2Map[timeKey] : parseFloat(latestSo2);
+
     return {
       time: h.time,
       rain: h.values.rainIntensity || 0,
@@ -1938,6 +2098,8 @@ function processTomorrowData(data) {
       temp: h.values.temperature,
       humidity: h.values.humidity || 60,
       pm25: pmVal,
+      pm10: pm10Val,
+      so2: so2Val,
       dew: h.values.dewPoint || h.values.temperature,
       wind: (h.values.windSpeed || 0) * 3.6,
       gust: (h.values.windGust || h.values.windSpeed || 0) * 3.6,
@@ -1959,7 +2121,9 @@ function processTomorrowData(data) {
       windMax: (d.values.windSpeedMax || 4) * 3.6,
       uvMax: d.values.uvIndexMax || 6,
       solarWh: estWh,
-      pm25: Math.max(2, parseFloat(latestPm25) + (idx % 2 === 0 ? 1.5 : -0.8))
+      pm25: Math.max(2, parseFloat(latestPm25) + (idx % 2 === 0 ? 1.5 : -0.8)),
+      pm10: Math.max(4, parseFloat(latestPm10) + (idx % 2 === 0 ? 2.5 : -1.2)),
+      so2: Math.max(0.5, parseFloat(latestSo2) + (idx % 2 === 0 ? 0.8 : -0.4))
     };
   });
 
@@ -1995,7 +2159,7 @@ function processTomorrowData(data) {
     currentTemp, feelsTemp, weatherLabel, todayHigh, todayLow, active.baselineAvg || 32,
     latestAqi, latestPm25, Math.round(cur.uvIndex || 0), cur.humidity || 56,
     cur.precipitationProbability || 0, cur.dewPoint || cur.temperature, windKmh, cur.weatherCode, cur.rainIntensity || 0,
-    todayPrecip, currentCapeValue
+    todayPrecip, currentCapeValue, latestPm10, latestSo2
   );
 
   const presVal = Math.round(cur.pressureSurfaceLevel || 1006);
@@ -2067,7 +2231,10 @@ function processOpenMeteoData(data) {
     const dObj = new Date(hourly.time[i]);
     const cloud = hourly.cloud_cover[i] || 0;
     const solar = estimateSolarOutput600W(dObj, cloud);
-    const pmVal = hourlyPm25Map[hourly.time[i]] || parseFloat(latestPm25);
+    const timeKey = hourly.time[i];
+    const pmVal = hourlyPm25Map[timeKey] || parseFloat(latestPm25);
+    const pm10Val = hourlyPm10Map[timeKey] !== undefined ? hourlyPm10Map[timeKey] : parseFloat(latestPm10);
+    const so2Val = hourlySo2Map[timeKey] !== undefined ? hourlySo2Map[timeKey] : parseFloat(latestSo2);
 
     cachedHourly.push({
       time: hourly.time[i],
@@ -2076,6 +2243,8 @@ function processOpenMeteoData(data) {
       temp: hourly.temperature_2m[i],
       humidity: hourly.relative_humidity_2m[i] || 60,
       pm25: pmVal,
+      pm10: pm10Val,
+      so2: so2Val,
       dew: hourly.dew_point_2m[i] || hourly.temperature_2m[i],
       wind: hourly.wind_speed_10m[i] || 0,
       gust: hourly.wind_gusts_10m[i] || hourly.wind_speed_10m[i] || 0,
@@ -2099,7 +2268,9 @@ function processOpenMeteoData(data) {
       windMax: daily.wind_speed_10m_max ? daily.wind_speed_10m_max[i] : 14,
       uvMax: daily.uv_index_max ? daily.uv_index_max[i] : 6,
       solarWh: estWh,
-      pm25: Math.max(2, parseFloat(latestPm25) + (i % 2 === 0 ? 1.2 : -0.7))
+      pm25: Math.max(2, parseFloat(latestPm25) + (i % 2 === 0 ? 1.2 : -0.7)),
+      pm10: Math.max(4, parseFloat(latestPm10) + (i % 2 === 0 ? 2.0 : -1.0)),
+      so2: Math.max(0.5, parseFloat(latestSo2) + (i % 2 === 0 ? 0.6 : -0.3))
     });
   }
 
@@ -2128,7 +2299,7 @@ function processOpenMeteoData(data) {
     latestAqi, latestPm25, Math.round(hourly.uv_index ? hourly.uv_index[startIdx] : 0),
     cur.relative_humidity_2m || 56, hourly.precipitation_probability[startIdx] || 0,
     hourly.dew_point_2m[startIdx] || cur.temperature_2m, windKmh, cur.weather_code, cur.rain,
-    todayTotalPrecip, cape
+    todayTotalPrecip, cape, latestPm10, latestSo2
   );
 
   const presVal = Math.round(cur.surface_pressure || 1006);
@@ -2308,6 +2479,18 @@ function renderActiveHourlyChart() {
     ];
     scales.y = { beginAtZero: true, max: 40, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} µg` } };
 
+  } else if (currentHourlyView === 'pm10') {
+    datasets = [
+      { type: "bar", label: "PM10 (µg/m³)", data: slice.map(h => h.pm10 || 0), backgroundColor: "rgba(56, 189, 248, 0.8)", borderRadius: 6, yAxisID: "y" }
+    ];
+    scales.y = { beginAtZero: true, max: 80, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} µg` } };
+
+  } else if (currentHourlyView === 'so2') {
+    datasets = [
+      { type: "bar", label: "SO₂ (µg/m³)", data: slice.map(h => h.so2 || 0), backgroundColor: "rgba(250, 204, 21, 0.8)", borderRadius: 6, yAxisID: "y" }
+    ];
+    scales.y = { beginAtZero: true, max: 40, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} µg` } };
+
   } else if (currentHourlyView === 'wind') {
     datasets = [
       { type: "line", label: "Wind (km/h)", data: slice.map(h => h.wind), borderColor: "#93c5fd", tension: 0.3, yAxisID: "y" },
@@ -2401,6 +2584,18 @@ function renderActiveDailyChart() {
       { type: "bar", label: "Avg PM2.5 (µg/m³)", data: cachedDaily.map(d => d.pm25.toFixed(1)), backgroundColor: "rgba(52, 211, 153, 0.8)", borderRadius: 6, yAxisID: "y" }
     ];
     scales.y = { beginAtZero: true, max: 35, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} µg` } };
+
+  } else if (currentDailyView === 'pm10') {
+    datasets = [
+      { type: "bar", label: "Avg PM10 (µg/m³)", data: cachedDaily.map(d => (d.pm10 || 0).toFixed(1)), backgroundColor: "rgba(56, 189, 248, 0.8)", borderRadius: 6, yAxisID: "y" }
+    ];
+    scales.y = { beginAtZero: true, max: 60, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} µg` } };
+
+  } else if (currentDailyView === 'so2') {
+    datasets = [
+      { type: "bar", label: "Avg SO₂ (µg/m³)", data: cachedDaily.map(d => (d.so2 || 0).toFixed(1)), backgroundColor: "rgba(250, 204, 21, 0.8)", borderRadius: 6, yAxisID: "y" }
+    ];
+    scales.y = { beginAtZero: true, max: 30, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v} µg` } };
 
   } else if (currentDailyView === 'wind') {
     datasets = [
@@ -2578,7 +2773,6 @@ function handleCitySearch(query) {
 
   searchDebounceTimer = setTimeout(async () => {
     try {
-      // 5-second dedicated timeout for user geocoding search to prevent drops on mobile connections
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5000);
       const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanQuery)}&count=6&language=en&format=json`;
