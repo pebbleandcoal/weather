@@ -1,7 +1,6 @@
 const API_KEY = "jO1pS3yOqaEaPL7KBOFghwmff66C6ehe";
 const iqAirKey = '57810971-c634-4d89-a7cb-4cf2ae9d2b2b';
 
-// Universal 2-second fetch wrapper that aborts and skips slow network requests
 function fetchWithTimeout(url, options = {}, timeout = 2000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
@@ -51,7 +50,6 @@ let latestSo2 = "0.0";
 let hourlyPm10Map = {};
 let hourlySo2Map = {};
 
-// Global Storm Tracker data & integration logic
 const globalStorms = [
     { name: "Tropical Storm Norbert", basin: "Eastern Pacific", type: "Tropical Storm", winds: "85 km/h", movement: "W @ 16 km/h", lat: 19.4, lon: -145.2 },
     { name: "Post-Tropical Cyclone Lowell", basin: "Central Pacific", type: "Post-Tropical", winds: "80 km/h", movement: "W @ 18 km/h", lat: 29.0, lon: -169.9 },
@@ -108,23 +106,23 @@ function renderStormTrackerWidget(focusStorm = null) {
     globalStorms.forEach(storm => {
         const distKm = calculateStormDistance(curLat, curLon, storm.lat, storm.lon);
         
-        let effectColor = "var(--warning, #f59e0b)";
+        let effectColor = "var(--warning)";
         let effectBg = "rgba(245, 158, 11, 0.05)";
-        let effectBorder = "var(--warning, #f59e0b)";
+        let effectBorder = "var(--warning)";
         let badgeClass = "";
         let effectText = `Moderate distance; minimal direct interference with ${active.name}.`;
 
         if (distKm < 500) {
             effectText = `High Alert: Direct proximity zone to ${active.name}!`;
-            effectColor = "var(--danger, #ef4444)";
+            effectColor = "var(--danger)";
             effectBg = "rgba(239, 68, 68, 0.05)";
-            effectBorder = "var(--danger, #ef4444)";
+            effectBorder = "var(--danger)";
             badgeClass = "badge-danger";
         } else if (distKm > 6000) {
             effectText = `Distant system (${Math.round(distKm).toLocaleString()} km away).`;
-            effectColor = "var(--safe, #10b981)";
+            effectColor = "var(--safe)";
             effectBg = "rgba(16, 185, 129, 0.05)";
-            effectBorder = "var(--safe, #10b981)";
+            effectBorder = "var(--safe)";
             badgeClass = "badge-safe";
         }
 
@@ -158,7 +156,7 @@ function renderStormTrackerWidget(focusStorm = null) {
 
     const iframe = document.getElementById('stormWindyFrame');
     if (iframe) {
-        iframe.src = `https://embed.windy.com/embed2.html?lat=${targetLat.toFixed(3)}&lon=${targetLon.toFixed(3)}&zoom=${targetZoom}&level=surface&overlay=wind&menu=false&message=false&marker=true&calendar=now&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C`;
+        iframe.src = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=${targetZoom}&overlay=gustAccu&product=ecmwf&level=surface&lat=${targetLat.toFixed(3)}&lon=${targetLon.toFixed(3)}`;
     }
 }
 
@@ -973,7 +971,7 @@ async function loadAtmosphericHazards(lat, lon) {
         floodVal.style.color = "var(--accent-orange)";
         floodBar.style.width = "50%";
         floodBar.style.background = "var(--accent-orange)";
-        floodSub.textContent = `Elevated tributary runoff (~${dailyRain.toFixed(1)} mm today). Urban ponding and localized drainage backflow likely.`;
+        stageSub.textContent = `Elevated tributary runoff (~${dailyRain.toFixed(1)} mm today). Urban ponding and localized drainage backflow likely.`;
       } else {
         floodVal.textContent = "Minimal / Normal";
         floodVal.style.color = "var(--accent-green)";
@@ -1321,21 +1319,21 @@ function updateMoonWidget() {
 }
 
 function updateWindyWidget(lat, lon) {
-  const iframe = document.getElementById("windyIframe");
+  const iframe = document.getElementById("windyTempIframe");
   const externalLink = document.getElementById("windyExternalLink");
   
-  const roundedLat = Number(lat).toFixed(4);
-  const roundedLon = Number(lon).toFixed(4);
+  const roundedLat = Number(lat).toFixed(3);
+  const roundedLon = Number(lon).toFixed(3);
 
   if (iframe) {
-    const newSrc = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=5&overlay=wind&product=ecmwf&level=surface&lat=${roundedLat}&lon=${roundedLon}&detailLat=${roundedLat}&detailLon=${roundedLon}&pressure=true&message=true`;
+    const newSrc = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=4&overlay=efiTemp&product=efi&level=surface&lat=${roundedLat}&lon=${roundedLon}&pressure=true&message=true`;
     if (iframe.src !== newSrc) {
       iframe.src = newSrc;
     }
   }
 
   if (externalLink) {
-    externalLink.href = `https://www.windy.com/?${roundedLat},${roundedLon},5`;
+    externalLink.href = `https://www.windy.com/?${roundedLat},${roundedLon},4`;
   }
 }
 

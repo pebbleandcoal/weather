@@ -1116,7 +1116,6 @@
       margin-top: 2px;
     }
 
-    /* Storm Tracker Widget Styles embedded from storm.html */
     .storm-list {
       display: flex;
       flex-direction: column;
@@ -1221,7 +1220,7 @@
     .map-wrapper {
       position: relative;
       width: 100%;
-      height: 250px;
+      height: 450px;
       border-radius: 10px;
       overflow: hidden;
       border: 1px solid var(--border);
@@ -1507,7 +1506,6 @@
       </div>
 
       <div class="climate-bars-stack">
-        <!-- Air Quality Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1521,7 +1519,6 @@
           </div>
         </div>
 
-        <!-- UV Index Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1535,7 +1532,6 @@
           </div>
         </div>
 
-        <!-- Humidity Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1549,7 +1545,6 @@
           </div>
         </div>
 
-        <!-- Wind Speed Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1563,7 +1558,6 @@
           </div>
         </div>
 
-        <!-- Rain Probability Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1577,7 +1571,6 @@
           </div>
         </div>
 
-        <!-- Daily Precipitation Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1591,7 +1584,6 @@
           </div>
         </div>
 
-        <!-- Instability (CAPE) Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1605,7 +1597,6 @@
           </div>
         </div>
 
-        <!-- Particulate Matter PM10 Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1619,7 +1610,6 @@
           </div>
         </div>
 
-        <!-- Sulphur Dioxide SO2 Bar -->
         <div class="climate-metric-item">
           <div class="climate-metric-header">
             <div class="climate-metric-left">
@@ -1651,8 +1641,6 @@
         </div>
       </div>
     </div>
-
-
 
     <!-- 24-Hour Hourly Projection -->
     <div class="weather-card">
@@ -1745,7 +1733,6 @@
       </div>
 
       <div class="columns-track-tri">
-        <!-- Day 1 -->
         <div class="day-column-tri">
           <div class="day-name-tri" id="tri-day-0">Tomorrow</div>
           <div class="day-date-tri" id="tri-date-0">--</div>
@@ -1802,7 +1789,6 @@
           </div>
         </div>
 
-        <!-- Day 2 -->
         <div class="day-column-tri">
           <div class="day-name-tri" id="tri-day-1">Day 2</div>
           <div class="day-date-tri" id="tri-date-1">--</div>
@@ -1859,7 +1845,6 @@
           </div>
         </div>
 
-        <!-- Day 3 -->
         <div class="day-column-tri">
           <div class="day-name-tri" id="tri-day-2">Day 3</div>
           <div class="day-date-tri" id="tri-date-2">--</div>
@@ -1997,13 +1982,29 @@
       </div>
     </div>
 
-    <!-- Global Storm Tracker Widget Integrated Here -->
+    <!-- Windy Map Iframe Integration -->
+<div class="weather-card satellite-card">
+  <div class="satellite-header">
+    <div class="card-title" style="margin-bottom: 0;">
+      <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
+      <span>TEMPERATURE</span>
+    </div>
+    <a id="windyExternalLink" href="https://www.windy.com/?13.3671,103.8448,5" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">
+      Open in Windy ↗
+    </a>
+  </div>
+  <div class="satellite-map-wrapper" style="height: 340px;">
+    <iframe id="windyTempIframe" width="100%" height="100%" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=4&overlay=efiTemp&product=efi&level=surface&lat=13.367&lon=103.845&pressure=true&message=true" frameborder="0"></iframe>
+  </div>
+</div>
+
+    <!-- Global Storm Tracker Widget Located Directly Below Mapping Section -->
     <div class="weather-card">
       <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
         <div class="widget-title">
           <div class="card-title" style="margin-bottom: 2px;">
             <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-10 10c0 4.9 3.5 8.9 8.2 9.8l.8.2v-6.2H9v-2h2V12a3 3 0 0 1 3-3h2v2h-2a1 1 0 0 0-1 1v1.8h3v2h-3V22c5.5-.5 9.8-5.1 9.8-10.7A10 10 0 0 0 12 2z"/></svg>
-            <span>STORM TRACKER</span>
+            <span>GLOBAL STORM TRACKER & WIND ACCUMULATION MAP</span>
           </div>
           <p id="subtext" style="font-size: 0.75rem; color: var(--muted);">📍 Current Location Tracking Active</p>
         </div>
@@ -2014,14 +2015,11 @@
       </div>
 
       <div class="map-wrapper">
-        <iframe id="stormWindyFrame" src="https://embed.windy.com/embed2.html?lat=13.363&lon=103.856&zoom=4&level=surface&overlay=wind&menu=false&message=false&marker=true&calendar=now&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C" title="Windy Map"></iframe>
+        <iframe id="stormWindyFrame" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=5&overlay=gustAccu&product=ecmwf&level=surface&lat=13.363&lon=103.856" title="Wind Accumulation Map" frameborder="0"></iframe>
       </div>
 
       <div class="footer-note">
-      </div>
-    </div>
-
-    
+        Integrated with Windy.com interactive wind accumulation weather frame. Click any storm card to re-center the map coordinates dynamically.
       </div>
     </div>
 
@@ -2076,7 +2074,7 @@
 
       <div class="weather-card">
         <div class="card-title">
-          <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5zm0 12.5c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6 z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5zm0 12.5c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
           <span>VISIBILITY</span>
         </div>
         <div class="card-large-val" id="val-visibility">-- km</div>
@@ -2267,7 +2265,6 @@
         <div class="metric-sub" id="humidexSub">Deriving vapor pressure load...</div>
       </div>
 
-      <!-- Pollen & Allergen Indices -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌾 Pollen & Allergen Index</span>
@@ -2288,7 +2285,6 @@
         <span>EARLY WARNING TELEMETRY</span>
       </div>
 
-      <!-- 1. Fires in Area & Wildfire Danger -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🔥 Fires in Area & Thermal Hotspots</span>
@@ -2302,7 +2298,6 @@
         </div>
       </div>
 
-      <!-- 2. Volcanic Plume Warning -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌋 Volcanic Plume Warning</span>
@@ -2316,7 +2311,6 @@
         </div>
       </div>
 
-      <!-- 3. Tectonic Activity -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">⚡ Tectonic Activity</span>
@@ -2328,7 +2322,6 @@
         <div class="metric-sub" id="quakeSub">Connecting live seismic sensors...</div>
       </div>
 
-      <!-- 4. Tsunami Alerts -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌊 Tsunami Alerts</span>
@@ -2340,7 +2333,6 @@
         <div class="metric-sub" id="tsunamiSub">Evaluating oceanic hypocenters...</div>
       </div>
 
-      <!-- 5. Local Flood Stage & Water Basin Levels -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌊 Flood Stage & Water Basin Levels</span>
@@ -2354,7 +2346,6 @@
         </div>
       </div>
 
-      <!-- 6. Flash Flooding & Runoff -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌊 Flash & River Flood Risk</span>
@@ -2368,7 +2359,6 @@
         </div>
       </div>
 
-      <!-- 7. Tropical Systems / Squall Shears -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">🌀 Tropical Systems / Typhoons</span>
@@ -2382,7 +2372,6 @@
         </div>
       </div>
 
-      <!-- 8. Convective Lightning Strikes -->
       <div class="metric-row">
         <div class="metric-header">
           <span class="metric-tag">⚡ Lightning Activity</span>
@@ -2396,7 +2385,6 @@
         </div>
       </div>
 
-      <!-- 9. Northern Mekong Sub-Region Haze & Fire Advisory (ASMC) -->
       <div class="asmc-card" id="asmcWidgetCard">
         <div class="asmc-badge-row">
           <span id="asmcLevelBadge" class="asmc-level-badge">Level 0: Stand Down</span>
