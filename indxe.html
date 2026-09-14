@@ -1,0 +1,2597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Weather Station</title>
+  
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180x180.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="apple-touch-icon-167x167.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Weather">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Leaflet Velocity (Wind Streamlines Engine) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-velocity/dist/leaflet-velocity.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-velocity/dist/leaflet-velocity.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+  
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(19, 28, 46, 0.75);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --safe: #10b981;
+      --border: #1e293b;
+      --card-radius: 20px;
+      --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --moon-glow: rgba(254, 240, 138, 0.3);
+      --accent-red: #f43f5e;
+      --accent-orange: #fb923c;
+      --accent-yellow: #facc15;
+      --accent-green: #34d399;
+      --accent-blue: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-stack);
+      min-height: 100vh;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 16px 10px 115px 10px;
+      position: relative;
+      overflow-x: hidden;
+      touch-action: pan-y;
+    }
+
+    #pullDownIndicator {
+      position: fixed;
+      top: -55px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(20, 32, 48, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 18px;
+      border-radius: 99px;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #pullDownIndicator svg {
+      width: 16px;
+      height: 16px;
+      fill: #38bdf8;
+      transition: transform 0.25s ease;
+    }
+
+    #pullDownIndicator.pulling-ready svg {
+      transform: rotate(180deg);
+    }
+
+    #pullDownIndicator.refreshing svg {
+      animation: spinEarth 0.8s linear infinite;
+    }
+
+    #pullDownIndicator span {
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+
+    #weatherCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #lightningFlash {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.9);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.08s ease-out;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.20);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease-in-out;
+    }
+
+    #loadingOverlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .spinning-earth {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #38bdf8 0%, #0369a1 60%, #0f172a 100%);
+      box-shadow: inset -12px -6px 24px rgba(0, 0, 0, 0.7), 0 0 25px rgba(56, 189, 248, 0.4);
+      position: relative;
+      overflow: hidden;
+      animation: globeAtmospherePulse 2.5s ease-in-out infinite;
+    }
+
+    .spinning-earth::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px dashed rgba(255, 255, 255, 0.25);
+      animation: spinEarth 1.8s linear infinite;
+    }
+
+    .spinning-earth::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 14px;
+      width: 32px;
+      height: 40px;
+      background: rgba(52, 211, 153, 0.35);
+      border-radius: 40% 60% 50% 50% / 40% 40% 60% 60%;
+      filter: blur(2px);
+      animation: spinEarth 1.8s linear infinite;
+      transform-origin: 22px 26px;
+    }
+
+    @keyframes spinEarth {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.03); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    @keyframes globeAtmospherePulse {
+      0%, 100% { box-shadow: inset -12px -6px 24px rgba(0, 0, 0, 0.7), 0 0 15px rgba(56, 189, 248, 0.3); }
+      50% { box-shadow: inset -12px -6px 24px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.6); }
+    }
+
+    .loading-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .ios-shell {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    .ios-shell.sliding-out-left { opacity: 0; transform: translateX(-35px); }
+    .ios-shell.sliding-out-right { opacity: 0; transform: translateX(35px); }
+    .ios-shell.sliding-in-left { opacity: 0; transform: translateX(35px); }
+    .ios-shell.sliding-in-right { opacity: 0; transform: translateX(-35px); }
+
+    .ios-header {
+      text-align: center;
+      padding: 4px 0 6px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header-location-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .header-city {
+      font-size: 2.1rem;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      line-height: 1.15;
+    }
+
+    .header-date-line {
+      font-size: 1.15rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-top: 2px;
+      letter-spacing: -0.01em;
+    }
+
+    .header-time-large {
+      font-size: 2.9rem;
+      font-weight: 300;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-top: 2px;
+      color: #ffffff;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .header-time-diff {
+      font-size: 1.15rem;
+      font-weight: 400;
+      opacity: 0.75;
+      vertical-align: baseline;
+    }
+
+    .weather-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 16px;
+      position: relative;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+      opacity: 0.85;
+      flex-shrink: 0;
+    }
+
+    .card-subtext {
+      font-size: 0.78rem;
+      line-height: 1.35;
+      color: var(--text);
+      margin-top: auto;
+    }
+
+    .alert-card {
+      display: none;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--card-radius);
+      padding: 12px 14px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #topHazardAlertCard {
+      display: none;
+      background: rgba(40, 16, 20, 0.65);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      gap: 8px;
+    }
+
+    .top-hazard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .top-hazard-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 12px 0 2px 4px;
+    }
+
+    .climate-bars-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin: 8px 0 10px 0;
+    }
+
+    .climate-metric-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .climate-metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .climate-metric-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .climate-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .climate-metric-right {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .ios-progress-track {
+      width: 100%;
+      height: 3.5px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .ios-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      transition: width 0.6s ease;
+    }
+
+    .metric-row {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .metric-row:hover {
+      background: rgba(56, 189, 248, 0.05);
+      border-color: var(--accent);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .metric-tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metric-val {
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+    }
+
+    .metric-sub {
+      font-size: 0.76rem;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 3.5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
+    }
+
+    .asmc-card {
+      background: rgba(249, 115, 22, 0.08);
+      border: 1px solid rgba(249, 115, 22, 0.35);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .asmc-card.standdown {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.14);
+    }
+    .asmc-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .asmc-level-badge {
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #ea580c;
+      color: #000;
+    }
+    .asmc-phase-text {
+      font-size: 0.68rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .asmc-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.25;
+    }
+    .asmc-desc {
+      font-size: 0.74rem;
+      line-height: 1.35;
+      color: rgba(255, 255, 255, 0.78);
+    }
+    .asmc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .asmc-metric-item {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+    .asmc-metric-val {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .segmented-control {
+      display: flex;
+      background: rgba(0, 0, 0, 0.18);
+      padding: 2px;
+      border-radius: 99px;
+      gap: 2px;
+      margin-bottom: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .segmented-control::-webkit-scrollbar { display: none; }
+
+    .seg-btn {
+      flex: 1;
+      white-space: nowrap;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 5px 8px;
+      border-radius: 99px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-stack);
+    }
+
+    .seg-btn.active {
+      background: rgba(255, 255, 255, 0.28);
+      color: #ffffff;
+    }
+
+    canvas.chart-canvas {
+      width: 100% !important;
+      max-height: 160px;
+    }
+
+    .today-periods-track {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      overflow-x: visible;
+      margin-bottom: 8px;
+    }
+
+    .today-period-card {
+      min-width: unset;
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .today-period-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+
+    .today-period-temp {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 4px 0;
+    }
+
+    .today-period-metrics {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 5px;
+      margin-top: 3px;
+    }
+
+    .today-period-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.62rem;
+      line-height: 1.2;
+    }
+    .today-period-row .lbl { color: var(--muted); }
+    .today-period-row .val { font-weight: 600; color: #ffffff; }
+
+    .forecast-card-tri {
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tri-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .columns-track-tri {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      overflow-x: visible;
+    }
+
+    .day-column-tri {
+      min-width: unset;
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .day-name-tri {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .day-date-tri {
+      font-size: 0.54rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 1px;
+      margin-bottom: 5px;
+    }
+
+    .period-stack-tri {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .period-cell-tri {
+      background: rgba(0, 0, 0, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 3px 2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .period-info-tri {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .period-label-tri {
+      font-size: 0.44rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--muted);
+      line-height: 1;
+    }
+
+    .period-temp-tri {
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-top: 1px;
+    }
+
+    .period-meta-tri {
+      font-size: 0.48rem;
+      color: rgba(255, 255, 255, 0.72);
+      font-weight: 500;
+      margin-top: 1px;
+      white-space: nowrap;
+    }
+
+    .icon-box-tri {
+      width: 24px;
+      height: 22px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .icon-box-large {
+      width: 36px;
+      height: 32px;
+      position: relative;
+      flex-shrink: 0;
+      transform: scale(1.1);
+      transform-origin: center;
+      margin: 2px 0;
+    }
+
+    .climate-hero-icon {
+      width: 52px;
+      height: 44px;
+      position: relative;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: gentleBob 3.6s ease-in-out infinite;
+    }
+
+    @keyframes gentleBob {
+      0%, 100% { transform: translateY(0px) scale(1.1); }
+      50% { transform: translateY(-3px) scale(1.13); }
+    }
+
+    @keyframes sunPulseGlow {
+      0%, 100% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
+      50% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.9); }
+    }
+
+    @keyframes moonAura {
+      0%, 100% { 
+        filter: drop-shadow(0 0 6px rgba(254, 240, 138, 0.45)); 
+        transform: rotate(-12deg) scale(1);
+      }
+      50% { 
+        filter: drop-shadow(0 0 15px rgba(254, 240, 138, 0.9)); 
+        transform: rotate(-6deg) scale(1.05);
+      }
+    }
+
+    @keyframes cloudDrift {
+      0%, 100% { transform: translateX(0px); }
+      50% { transform: translateX(2.5px); }
+    }
+
+    @keyframes rainDrip {
+      0% { transform: translateY(-2px); opacity: 0.2; }
+      50% { opacity: 1; }
+      100% { transform: translateY(4px); opacity: 0.1; }
+    }
+
+    @keyframes starTwinkle {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .sun-3d {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffeb55 0%, #f59e0b 80%);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.5);
+      top: 1px;
+      right: 2px;
+      z-index: 1;
+      animation: sunPulseGlow 3s ease-in-out infinite;
+    }
+
+    .moon-3d {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: inset -5px -2px 0 0 #fef08a, inset -7px -3px 0 0 #facc15;
+      filter: drop-shadow(0 0 8px rgba(254, 240, 138, 0.8));
+      top: 1px;
+      right: 2px;
+      z-index: 1;
+      animation: moonAura 4s ease-in-out infinite;
+    }
+
+    .moon-stars-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .moon-star {
+      position: absolute;
+      background: #ffffff;
+      border-radius: 50%;
+      animation: starTwinkle 2.5s infinite ease-in-out;
+    }
+    .s1 { width: 2.5px; height: 2.5px; top: 4px; left: 8px; animation-delay: 0.2s; }
+    .s2 { width: 3px; height: 3px; bottom: 8px; right: 6px; animation-delay: 1.1s; }
+    .s3 { width: 2px; height: 2px; top: 12px; right: 28px; animation-delay: 1.8s; }
+
+    .cloud-3d {
+      position: absolute;
+      width: 22px;
+      height: 10px;
+      background: linear-gradient(180deg, #ffffff 0%, #dbe2ef 100%);
+      border-radius: 10px;
+      bottom: 2px;
+      left: 1px;
+      z-index: 2;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18), inset -1px -2px 3px rgba(150, 160, 200, 0.35);
+      animation: cloudDrift 4s ease-in-out infinite;
+    }
+    .cloud-3d::before {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: linear-gradient(180deg, #ffffff 0%, #e8ecf5 100%);
+      border-radius: 50%;
+      top: -5px;
+      left: 2px;
+      box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.9);
+    }
+    .cloud-3d::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: linear-gradient(180deg, #ffffff 0%, #dbe2ef 100%);
+      border-radius: 50%;
+      top: -2px;
+      right: 1px;
+    }
+
+    .cloud-storm {
+      background: linear-gradient(180deg, #b0b8c9 0%, #64748b 100%);
+    }
+    .cloud-storm::before {
+      background: linear-gradient(180deg, #b0b8c9 0%, #7d8ea3 100%);
+    }
+    .cloud-storm::after {
+      background: linear-gradient(180deg, #99a5b8 0%, #64748b 100%);
+    }
+
+    .lightning-3d {
+      position: absolute;
+      width: 5px;
+      height: 8px;
+      background: #facc15;
+      clip-path: polygon(100% 0, 0 55%, 40% 55%, 0 100%, 100% 35%, 60% 35%);
+      bottom: -2px;
+      left: 9px;
+      z-index: 3;
+      filter: drop-shadow(0 2px 4px rgba(250, 204, 21, 0.8));
+      animation: thunderFlash 2s infinite;
+    }
+
+    .rain-drop {
+      position: absolute;
+      width: 2px;
+      height: 4px;
+      background: #38bdf8;
+      border-radius: 2px;
+      bottom: -3px;
+      z-index: 1;
+      animation: rainDrip 1.2s infinite ease-in;
+    }
+    .r1 { left: 5px; animation-delay: 0s; }
+    .r2 { left: 11px; bottom: -5px; animation-delay: 0.3s; }
+    .r3 { left: 17px; animation-delay: 0.6s; }
+
+    /* --- SATELLITE & PRECIPITATION RADAR ENHANCEMENTS --- */
+    .satellite-card { padding: 16px; overflow: hidden; }
+    .satellite-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .satellite-link-btn {
+      font-size: 0.7rem;
+      color: #38bdf8;
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: opacity 0.2s;
+    }
+    .satellite-link-btn:hover { opacity: 0.8; }
+    .satellite-map-wrapper {
+      width: 100%;
+      height: 320px;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      background: #111a28;
+      z-index: 1;
+      border: 1px solid var(--border);
+      cursor: crosshair;
+    }
+    #satelliteMap { width: 100%; height: 100%; }
+
+    .leaflet-labels-pane {
+      z-index: 650 !important;
+      opacity: 0.92;
+      filter: contrast(110%) brightness(105%) drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.9));
+    }
+
+    .loc-pulse-marker {
+      position: relative;
+      width: 16px;
+      height: 16px;
+    }
+    .loc-pulse-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      background: #38bdf8;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+      z-index: 2;
+    }
+    .loc-pulse-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      background: rgba(56, 189, 248, 0.4);
+      border-radius: 50%;
+      animation: pulseAnim 2s infinite ease-out;
+      z-index: 1;
+    }
+    @keyframes pulseAnim {
+      0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+    }
+
+    .timeline-bar {
+      margin-top: 10px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .play-btn {
+      background: #38bdf8;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #090d16;
+      font-size: 0.75rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .timeline-slider {
+      flex: 1;
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+    .timestamp-label {
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: #ffffff;
+      min-width: 55px;
+      text-align: right;
+    }
+
+    .cursor-info-box {
+      position: absolute;
+      z-index: 1001;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      padding: 6px 8px;
+      min-width: 120px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 0.7rem;
+    }
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .hud-label { color: var(--muted); font-weight: 500; }
+    .hud-val { color: #ffffff; font-weight: 600; }
+    .hud-coords {
+      font-size: 0.62rem;
+      color: var(--accent);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 2px;
+      margin-top: 2px;
+      text-align: right;
+    }
+    /* ----------------------------------------------------- */
+
+    .pressure-gauge-box {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 3px 0 2px 0;
+    }
+    .pressure-dial-svg { width: 120px; height: 95px; overflow: visible; }
+    .pressure-ticks-label-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding: 0 8px;
+      margin-top: -6px;
+    }
+
+    .wind-body { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 3px; }
+    .wind-stats { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .wind-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.84rem;
+      padding-bottom: 3px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .wind-row:last-child { border-bottom: none; }
+    .wind-label { color: var(--muted); font-weight: 400; }
+    .wind-value { font-weight: 500; }
+    .compass-container { width: 100px; height: 100px; position: relative; flex-shrink: 0; }
+    .compass-dial { width: 100%; height: 100%; }
+    .compass-needle { transform-origin: 50px 50px; transition: transform 0.6s ease-out; }
+
+    .sun-status-desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+    .sun-arc-container {
+      position: relative;
+      width: 100%;
+      height: 110px;
+      margin-top: 4px;
+    }
+    .sun-arc-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    .celestial-orb {
+      transition: cx 0.8s cubic-bezier(0.2, 0.9, 0.3, 1), 
+                  cy 0.8s cubic-bezier(0.2, 0.9, 0.3, 1), 
+                  fill 0.4s ease;
+    }
+    .sun-time-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+    .sun-time-block {
+      display: flex;
+      flex-direction: column;
+    }
+    .sun-time-block.right {
+      text-align: right;
+    }
+    .sun-time-tag {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    .sun-time-val {
+      font-size: 0.98rem;
+      font-weight: 600;
+      margin-top: 1px;
+      color: #ffffff;
+    }
+
+    .moon-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 10px 0 12px 0;
+    }
+    .canvas-wrapper {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin-bottom: 10px;
+      border-radius: 50%;
+      box-shadow: 0 0 20px var(--moon-glow);
+    }
+    #moon-canvas {
+      display: block;
+      border-radius: 50%;
+    }
+    .moon-phase-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .meta-badges {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .badge {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+    }
+    .badge-ill {
+      color: #fef08a;
+      background: rgba(254, 240, 138, 0.12);
+    }
+    .badge-sky {
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+    }
+    .moon-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .moon-detail-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      text-align: center;
+    }
+    .moon-detail-card .label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+    .moon-detail-card .value {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .moon-detail-card .subtext {
+      font-size: 0.68rem;
+      color: var(--accent);
+      margin-top: 2px;
+    }
+
+    .storm-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 250px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .storm-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .storm-card:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .storm-info-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .storm-name-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .storm-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+    }
+
+    .storm-basin {
+      font-size: 0.65rem;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .strength-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-safe { background: rgba(16, 185, 129, 0.15); color: var(--safe); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .storm-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      font-size: 0.73rem;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+
+    .storm-metrics strong {
+      color: var(--text);
+      display: block;
+      font-size: 0.73rem;
+    }
+
+    .local-effect-note {
+      font-size: 0.71rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      color: var(--warning);
+      background: rgba(245, 158, 11, 0.05);
+      padding: 5px 8px;
+      border-radius: 6px;
+      border-left: 3px solid var(--warning);
+    }
+
+    .click-hint {
+      font-size: 0.65rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .map-wrapper {
+      position: relative;
+      width: 100%;
+      height: 450px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+    }
+
+    .map-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .footer-note {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .ios-dock {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      max-width: 420px;
+      background: rgba(19, 28, 46, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    }
+
+    .dock-icon {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      opacity: 0.95;
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+      user-select: none;
+    }
+
+    .dock-pagination {
+      flex: 1;
+      min-width: 0;
+      margin: 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      user-select: none;
+      overflow-x: auto;
+      scrollbar-width: none;
+      scroll-behavior: smooth;
+      padding: 4px 0;
+    }
+    .dock-pagination::-webkit-scrollbar { display: none; }
+
+    .dock-bullet-item {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 2px;
+      flex-shrink: 0;
+    }
+    .dock-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      transition: all 0.25s ease;
+    }
+    .dock-bullet-item.active .dock-dot { background: #ffffff; transform: scale(1.35); }
+    .dock-location-arrow { width: 10px; height: 10px; fill: rgba(255, 255, 255, 0.45); }
+    .dock-bullet-item.active .dock-location-arrow { fill: #ffffff; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 1001;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+    .city-modal {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      background: #131c2e;
+      border-radius: 28px 28px 0 0;
+      border: 1px solid var(--border);
+      padding: 16px 18px 32px 18px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      max-height: 82vh;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.18, 0.89, 0.32, 1.15);
+      box-sizing: border-box;
+    }
+    .modal-backdrop.open .city-modal { transform: translateY(0%); }
+    .modal-drag-bar { width: 36px; height: 4px; background: rgba(255, 255, 255, 0.3); border-radius: 99px; margin: 0 auto 12px auto; flex-shrink: 0; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
+    .modal-title { font-size: 1.1rem; font-weight: 600; }
+    .modal-close-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: #ffffff;
+      font-size: 0.80rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 99px;
+      cursor: pointer;
+    }
+
+    .search-box-wrapper { position: relative; margin-bottom: 10px; flex-shrink: 0; }
+    .search-input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 12px 9px 36px;
+      font-size: 0.88rem;
+      color: #ffffff;
+      outline: none;
+      font-family: var(--font-stack);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .search-input:focus {
+      background: rgba(15, 23, 42, 1);
+      border-color: var(--accent);
+    }
+    .search-input::placeholder { color: rgba(255, 255, 255, 0.45); }
+    .search-icon-inside {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      fill: rgba(255, 255, 255, 0.45);
+      pointer-events: none;
+    }
+    .search-results-list, .saved-cities-list { 
+      list-style: none; 
+      overflow-y: auto; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 7px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .search-results-list {
+      max-height: 190px;
+      margin-bottom: 6px;
+    }
+    .saved-cities-list {
+      flex: 1;
+      max-height: 250px;
+    }
+    .city-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    .city-item-left { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+    .city-item-name { font-size: 0.95rem; font-weight: 600; }
+    .city-item-country { font-size: 0.74rem; color: var(--muted); }
+    .city-remove-btn { background: transparent; border: none; color: #f87171; padding: 4px; font-size: 1rem; cursor: pointer; }
+    .search-tag { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 6px 0 3px 4px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div id="pullDownIndicator">
+    <svg viewBox="0 0 24 24">
+      <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+    </svg>
+    <span id="pullDownText">Pull to Refresh</span>
+  </div>
+
+  <canvas id="weatherCanvas"></canvas>
+  <div id="lightningFlash"></div>
+
+  <div id="loadingOverlay" class="visible">
+    <div class="spinning-earth"></div>
+    <div class="loading-text">Collecting Atmospheric Data</div>
+  </div>
+
+  <main class="ios-shell" id="weatherShell">
+    <header class="ios-header">
+      <div class="header-location-tag" id="source-tag">MY LOCATION</div>
+      <h1 class="header-city" id="city-name">Siem Reap</h1>
+      <div class="header-date-line" id="live-date">Loading...</div>
+      <div class="header-time-large">
+        <span id="live-clock-time">--:--</span><span class="header-time-diff" id="live-clock-diff"></span>
+      </div>
+    </header>
+
+    <div id="rainAlertBanner" class="alert-card">
+      <span style="font-size: 1.1rem;">⚠️</span>
+      <span id="rainAlertMessage">Precipitation Alert</span>
+    </div>
+
+    <!-- Weather Summary Card -->
+    <div class="weather-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-10 10c0 4.9 3.5 8.9 8.2 9.8l.8.2v-6.2H9v-2h2V12a3 3 0 0 1 3-3h2v2h-2a1 1 0 0 0-1 1v1.8h3v2h-3V22c5.5-.5 9.8-5.1 9.8-10.7A10 10 0 0 0 12 2z"/></svg>
+        <span>WEATHER SUMMARY</span>
+      </div>
+      
+      <div style="color: #38bdf8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; margin: 6px 0 3px 0;">CURRENT CONDITIONS</div>
+      <div class="card-subtext" id="conditionsSummary" style="font-size: 0.9rem; font-weight: 500;">
+        Connecting live atmospheric sensors...
+      </div>
+      
+      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0;">
+      
+      <div style="color: #38bdf8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 3px 0;">FORECAST SUMMARY (MULTI-DAY OUTLOOK)</div>
+      <div class="card-subtext" id="forecastSummary" style="font-size: 0.9rem; font-weight: 500;">
+        Generating diurnal meteorological model...
+      </div>
+    </div>
+
+    <!-- Top Active Hazard & Bioclimatic Alerts -->
+    <div class="weather-card" id="topHazardAlertCard">
+      <div class="card-title" style="color: #f87171;">
+        <svg viewBox="0 0 24 24" style="fill: #f87171;"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
+        <span>ACTIVE HAZARDS & BIOCLIMATIC ALERTS</span>
+      </div>
+      <div class="top-hazard-list" id="topHazardAlertList"></div>
+    </div>
+
+    <!-- Climate Card -->
+    <div class="weather-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 0-4 4v7.3a6 6 0 1 0 8 0V6a4 4 0 0 0-4-4zm0 18a4 4 0 0 1-2.4-7.2l.4-.3V6a2 2 0 1 1 4 0v6.5l.4.3A4 4 0 0 1 12 20z"/></svg>
+        <span>CLIMATE</span>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0 8px 0;">
+        <div>
+          <div style="font-size: 2.8rem; font-weight: 400; line-height: 1; letter-spacing: -0.03em;" id="unified-cur-temp">--°</div>
+          <div style="font-size: 0.9rem; color: var(--muted); margin-top: 3px;" id="unified-condition">Loading...</div>
+        </div>
+
+        <div class="climate-hero-icon" id="climate-3d-icon-box">
+          <div class="sun-3d"></div>
+          <div class="cloud-3d"></div>
+        </div>
+
+        <div style="text-align: right;">
+          <div style="font-size: 1.5rem; font-weight: 500; color: #ffffff;" id="unified-feels">--°</div>
+          <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">Feels Like</div>
+        </div>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text); margin: 3px 0 8px 0;" id="unified-humidity-impact">
+        Calculating atmospheric thermal index...
+      </div>
+
+      <div class="climate-bars-stack">
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-aqi" style="background: #34d399;"></span>
+              <span id="label-aqi">Air Quality: Good</span>
+            </div>
+            <div class="climate-metric-right" id="metric-aqi">AQI 25 · PM2.5: 3.0</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-aqi" style="background: #34d399; width: 15%;"></div>
+          </div>
+        </div>
+
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-uv" style="background: #fbbf24;"></span>
+              <span id="label-uv">UV Index: Moderate</span>
+            </div>
+            <div class="climate-metric-right" id="metric-uv">UV 5 · Skin burn 18 min</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-uv" style="background: #fbbf24; width: 45%;"></div>
+          </div>
+        </div>
+
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-humidity" style="background: #38bdf8;"></span>
+              <span id="label-humidity">Humidity: Comfortable</span>
+            </div>
+            <div class="climate-metric-right" id="metric-humidity">56% · Dew 23°C</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-humidity" style="background: #38bdf8; width: 56%;"></div>
+          </div>
+        </div>
+
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-wind" style="background: #93c5fd;"></span>
+              <span id="label-wind">Wind Speed</span>
+            </div>
+            <div class="climate-metric-right" id="metric-wind">-- km/h</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-wind" style="background: #93c5fd; width: 20%;"></div>
+          </div>
+        </div>
+
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-prob" style="background: #22d3ee;"></span>
+              <span id="label-prob">Rain Probability: Minimal</span>
+            </div>
+            <div class="climate-metric-right" id="metric-prob">0% chance next 60m</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-prob" style="background: #22d3ee; width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-precip" style="background: #0284c7;"></span>
+              <span id="label-precip">Precipitation Today</span>
+            </div>
+            <div class="climate-metric-right" id="metric-precip">0.0 mm</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-precip" style="background: #0284c7; width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-cape" style="background: #34d399;"></span>
+              <span id="label-cape">Instability: Stable</span>
+            </div>
+            <div class="climate-metric-right" id="metric-cape">CAPE 0 J/kg</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-cape" style="background: #34d399; width: 4%;"></div>
+          </div>
+        </div>
+
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-pm10" style="background: #34d399;"></span>
+              <span id="label-pm10">PM10: Good</span>
+            </div>
+            <div class="climate-metric-right" id="metric-pm10">PM10: 0.0 µg/m³</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-pm10" style="background: #34d399; width: 10%;"></div>
+          </div>
+        </div>
+
+        <div class="climate-metric-item">
+          <div class="climate-metric-header">
+            <div class="climate-metric-left">
+              <span class="climate-dot" id="dot-so2" style="background: #34d399;"></span>
+              <span id="label-so2">Sulphur Dioxide: Low</span>
+            </div>
+            <div class="climate-metric-right" id="metric-so2">SO₂: 0.0 µg/m³</div>
+          </div>
+          <div class="ios-progress-track">
+            <div class="ios-progress-fill" id="bar-so2" style="background: #34d399; width: 10%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px;">
+        <div>
+          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 2px;">Daily Range</div>
+          <div style="font-size: 0.88rem; font-weight: 600;">
+            <span id="unified-day-high" style="color: #ffffff;">H: --°</span>
+            <span id="unified-day-low" style="color: var(--muted); margin-left: 6px;">L: --°</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 2px;" id="historicalContextTitle">Historical Mean For Today</div>
+          <div style="font-size: 0.84rem; font-weight: 500;" id="unified-avg-summary">
+            <span id="unified-avg-badge" style="background: rgba(251, 146, 60, 0.25); color: #fb923c; padding: 1px 6px; border-radius: 4px; font-weight: 600;">+0°</span>
+            <span style="color: var(--muted); font-size: 0.76rem; margin-left: 3px;" id="unified-avg-baseline">avg 32°</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 24-Hour Hourly Projection -->
+    <div class="weather-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M3.5 18.5 9.5 12.5l4 4 6.5-6.5V14h2V6h-8v2h4.1l-4.6 4.6-4-4L2 17.1l1.5 1.4z"/></svg>
+        <span>24-HOUR HOURLY PROJECTION</span>
+      </div>
+
+      <div class="today-periods-track">
+        <div class="today-period-card">
+          <span class="today-period-label">Morning</span>
+          <div class="icon-box-large" id="today-icon-0">
+            <div class="sun-3d"></div>
+            <div class="cloud-3d"></div>
+          </div>
+          <div class="today-period-temp" id="today-temp-0">--°</div>
+          <div class="today-period-metrics">
+            <div class="today-period-row"><span class="lbl">Humidity</span><span class="val" id="today-hum-0">--%</span></div>
+            <div class="today-period-row"><span class="lbl">UV</span><span class="val" id="today-uv-0">--</span></div>
+            <div class="today-period-row"><span class="lbl">Wind speed</span><span class="val" id="today-wind-0">-- K/H</span></div>
+            <div class="today-period-row"><span class="lbl">Rain</span><span class="val" id="today-rain-0">--</span></div>
+          </div>
+        </div>
+
+        <div class="today-period-card">
+          <span class="today-period-label">Afternoon</span>
+          <div class="icon-box-large" id="today-icon-1">
+            <div class="cloud-3d cloud-storm"></div>
+            <div class="lightning-3d"></div>
+          </div>
+          <div class="today-period-temp" id="today-temp-1">--°</div>
+          <div class="today-period-metrics">
+            <div class="today-period-row"><span class="lbl">Humidity</span><span class="val" id="today-hum-1">--%</span></div>
+            <div class="today-period-row"><span class="lbl">UV</span><span class="val" id="today-uv-1">--</span></div>
+            <div class="today-period-row"><span class="lbl">Wind speed</span><span class="val" id="today-wind-1">-- K/H</span></div>
+            <div class="today-period-row"><span class="lbl">Rain</span><span class="val" id="today-rain-1">--</span></div>
+          </div>
+        </div>
+
+        <div class="today-period-card">
+          <span class="today-period-label">Evening</span>
+          <div class="icon-box-large" id="today-icon-2">
+            <div class="moon-3d"></div>
+            <div class="cloud-3d"></div>
+          </div>
+          <div class="today-period-temp" id="today-temp-2">--°</div>
+          <div class="today-period-metrics">
+            <div class="today-period-row"><span class="lbl">Humidity</span><span class="val" id="today-hum-2">--%</span></div>
+            <div class="today-period-row"><span class="lbl">UV</span><span class="val" id="today-uv-2">--</span></div>
+            <div class="today-period-row"><span class="lbl">Wind speed</span><span class="val" id="today-wind-2">-- K/H</span></div>
+            <div class="today-period-row"><span class="lbl">Rain</span><span class="val" id="today-rain-2">--</span></div>
+          </div>
+        </div>
+
+        <div class="today-period-card">
+          <span class="today-period-label">Night</span>
+          <div class="icon-box-large" id="today-icon-3">
+            <div class="moon-3d"></div>
+          </div>
+          <div class="today-period-temp" id="today-temp-3">--°</div>
+          <div class="today-period-metrics">
+            <div class="today-period-row"><span class="lbl">Humidity</span><span class="val" id="today-hum-3">--%</span></div>
+            <div class="today-period-row"><span class="lbl">UV</span><span class="val" id="today-uv-3">--</span></div>
+            <div class="today-period-row"><span class="lbl">Wind speed</span><span class="val" id="today-wind-3">-- K/H</span></div>
+            <div class="today-period-row"><span class="lbl">Rain</span><span class="val" id="today-rain-3">--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="segmented-control">
+        <button class="seg-btn active" onclick="switchHourlyView('temp')">Temp</button>
+        <button class="seg-btn" onclick="switchHourlyView('humidity')">Humidity</button>
+        <button class="seg-btn" onclick="switchHourlyView('uv')">UV</button>
+        <button class="seg-btn" onclick="switchHourlyView('pm25')">PM 2.5</button>
+        <button class="seg-btn" onclick="switchHourlyView('pm10')">PM 10</button>
+        <button class="seg-btn" onclick="switchHourlyView('so2')">SO₂</button>
+        <button class="seg-btn" onclick="switchHourlyView('wind')">Wind</button>
+        <button class="seg-btn" onclick="switchHourlyView('rain')">Rain</button>
+        <button class="seg-btn" onclick="switchHourlyView('solar')">⚡ Solar</button>
+      </div>
+
+      <canvas id="hourlyForecastChart" class="chart-canvas"></canvas>
+    </div>
+
+    <!-- 3-Day Weather 4-Period Forecast Widget -->
+    <div class="forecast-card-tri" id="forecast-3day-widget">
+      <div class="tri-title">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+        <span>3-DAY SEGMENTED OUTLOOK</span>
+      </div>
+
+      <div class="columns-track-tri">
+        <div class="day-column-tri">
+          <div class="day-name-tri" id="tri-day-0">Tomorrow</div>
+          <div class="day-date-tri" id="tri-date-0">--</div>
+
+          <div class="period-stack-tri">
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-m-0">
+                <div class="sun-3d"></div>
+                <div class="cloud-3d"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Morning</span>
+                <span class="period-temp-tri" id="tri-temp-m-0">--°</span>
+                <span class="period-meta-tri" id="tri-meta-m-0">💧 --</span>
+              </div>
+            </div>
+
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-a-0">
+                <div class="cloud-3d cloud-storm"></div>
+                <div class="lightning-3d"></div>
+                <div class="rain-drop r1"></div>
+                <div class="rain-drop r3"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Afternoon</span>
+                <span class="period-temp-tri" id="tri-temp-a-0">--°</span>
+                <span class="period-meta-tri" id="tri-meta-a-0">💧 --</span>
+              </div>
+            </div>
+
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-e-0">
+                <div class="moon-3d"></div>
+                <div class="cloud-3d"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Evening</span>
+                <span class="period-temp-tri" id="tri-temp-e-0">--°</span>
+                <span class="period-meta-tri" id="tri-meta-e-0">💧 --</span>
+              </div>
+            </div>
+
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-n-0">
+                <div class="moon-3d"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Night</span>
+                <span class="period-temp-tri" id="tri-temp-n-0">--°</span>
+                <span class="period-meta-tri" id="tri-meta-n-0">💧 --</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-column-tri">
+          <div class="day-name-tri" id="tri-day-1">Day 2</div>
+          <div class="day-date-tri" id="tri-date-1">--</div>
+
+          <div class="period-stack-tri">
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-m-1">
+                <div class="cloud-3d"></div>
+                <div class="rain-drop r1"></div>
+                <div class="rain-drop r2"></div>
+                <div class="rain-drop r3"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Morning</span>
+                <span class="period-temp-tri" id="tri-temp-m-1">--°</span>
+                <span class="period-meta-tri" id="tri-meta-m-1">💧 --</span>
+              </div>
+            </div>
+
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-a-1">
+                <div class="cloud-3d cloud-storm"></div>
+                <div class="lightning-3d"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Afternoon</span>
+                <span class="period-temp-tri" id="tri-temp-a-1">--°</span>
+                <span class="period-meta-tri" id="tri-meta-a-1">💧 --</span>
+              </div>
+            </div>
+
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-e-1">
+                <div class="cloud-3d"></div>
+                <div class="rain-drop r2"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Evening</span>
+                <span class="period-temp-tri" id="tri-temp-e-1">--°</span>
+                <span class="period-meta-tri" id="tri-meta-e-1">💧 --</span>
+              </div>
+            </div>
+
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-n-1">
+                <div class="moon-3d"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Night</span>
+                <span class="period-temp-tri" id="tri-temp-n-1">--°</span>
+                <span class="period-meta-tri" id="tri-meta-n-1">💧 --</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-column-tri">
+          <div class="day-name-tri" id="tri-day-2">Day 3</div>
+          <div class="day-date-tri" id="tri-date-2">--</div>
+
+          <div class="period-stack-tri">
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-m-2">
+                <div class="sun-3d"></div>
+                <div class="cloud-3d"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Morning</span>
+                <span class="period-temp-tri" id="tri-temp-m-2">--°</span>
+                <span class="period-meta-tri" id="tri-meta-m-2">💧 --</span>
+              </div>
+            </div>
+
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-a-2">
+                <div class="sun-3d" style="top: 2px; right: 8px;"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Afternoon</span>
+                <span class="period-temp-tri" id="tri-temp-a-2">--°</span>
+                <span class="period-meta-tri" id="tri-meta-a-2">💧 --</span>
+              </div>
+            </div>
+
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-e-2">
+                <div class="moon-3d"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Evening</span>
+                <span class="period-temp-tri" id="tri-temp-e-2">--°</span>
+                <span class="period-meta-tri" id="tri-meta-e-2">💧 --</span>
+              </div>
+            </div>
+
+            <div class="period-cell-tri">
+              <div class="icon-box-tri" id="tri-icon-n-2">
+                <div class="moon-3d"></div>
+              </div>
+              <div class="period-info-tri">
+                <span class="period-label-tri">Night</span>
+                <span class="period-temp-tri" id="tri-temp-n-2">--°</span>
+                <span class="period-meta-tri" id="tri-meta-n-2">💧 --</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-Day Forecast Projection -->
+    <div class="weather-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+        <span>7-DAY FORECAST PROJECTION</span>
+      </div>
+
+      <div class="segmented-control">
+        <button class="seg-btn active" onclick="switchDailyView('temp')">Temp</button>
+        <button class="seg-btn" onclick="switchDailyView('humidity')">Humidity</button>
+        <button class="seg-btn" onclick="switchDailyView('uv')">UV</button>
+        <button class="seg-btn" onclick="switchDailyView('pm25')">PM 2.5</button>
+        <button class="seg-btn" onclick="switchDailyView('pm10')">PM 10</button>
+        <button class="seg-btn" onclick="switchDailyView('so2')">SO₂</button>
+        <button class="seg-btn" onclick="switchDailyView('wind')">Wind</button>
+        <button class="seg-btn" onclick="switchDailyView('rain')">Rain</button>
+        <button class="seg-btn" onclick="switchDailyView('solar')">⚡ Solar</button>
+      </div>
+
+      <canvas id="dailyForecastChart" class="chart-canvas"></canvas>
+    </div>
+
+    <!-- Earthquake Widget -->
+    <div class="section-label">Seismic Activity</div>
+    <div class="weather-card" id="earthquake-card">
+      <div class="card-title" style="justify-content: space-between; width: 100%; margin-bottom: 0;">
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <span>🌍</span>
+          <span>EARTHQUAKES TODAY</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.2); padding: 3px 8px; border-radius: 6px;">
+          <span style="font-size: 0.62rem; color: var(--muted); font-weight: 600;">MAG ></span>
+          <select id="mag-filter" style="background: transparent; color: white; border: none; font-size: 0.72rem; font-weight: 700; outline: none; cursor: pointer; padding-left: 2px;">
+            <option value="1" style="color: black;">1</option>
+            <option value="2" style="color: black;">2</option>
+            <option value="3" style="color: black;">3</option>
+            <option value="4" style="color: black;">4</option>
+            <option value="5" style="color: black;">5</option>
+            <option value="6" style="color: black;" selected>6</option>
+            <option value="7" style="color: black;">7</option>
+            <option value="8" style="color: black;">8</option>
+            <option value="9" style="color: black;">9</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="earthquake-widget-body" style="margin-top: 10px;">
+        <div id="eq-loading" style="text-align: center; color: var(--muted); font-size: 0.8rem; padding: 8px 0;">
+           Fetching latest seismic data...
+        </div>
+        <div id="eq-error" style="display: none; text-align: center; color: #f87171; font-size: 0.8rem; padding: 8px 0;">
+           Failed to load earthquake data.
+        </div>
+        <div id="eq-no-data" style="display: none; text-align: center; color: var(--muted); font-size: 0.8rem; padding: 8px 0;">
+           No earthquakes greater than this magnitude recorded today. 🎉
+        </div>
+        <ul id="earthquake-list" style="display: none; list-style: none; max-height: 220px; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 8px;">
+        </ul>
+      </div>
+      <div style="font-size: 0.65rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">
+        <span>Source: USGS API</span>
+        <span id="eq-update-time"></span>
+      </div>
+    </div>
+
+    <!-- Mapping Section -->
+    <div class="section-label">Atmospheric Telemetry & Celestial</div>
+
+    <!-- UPDATED SATELLITE & PRECIPITATION RADAR WIDGET -->
+    <div class="weather-card satellite-card">
+      <div class="satellite-header">
+        <div class="card-title" style="margin-bottom: 0;">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+          <span>SATELLITE & PRECIPITATION RADAR</span>
+        </div>
+        <a id="zoomEarthExternalLink" href="https://zoom.earth/maps/satellite/#view=13.3671,103.8448,5z/overlays=radar,wind,temperatures" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">Open in Zoom.Earth ↗</a>
+      </div>
+      
+      <div class="satellite-map-wrapper" id="mapWrapper">
+        <div id="satelliteMap"></div>
+
+        <!-- Dynamic Hover Info Box -->
+        <div class="cursor-info-box" id="cursorInfoBox">
+          <div class="hud-row">
+            <span class="hud-label">Temp</span>
+            <span class="hud-val" id="hudTemp">--°C</span>
+          </div>
+          <div class="hud-row">
+            <span class="hud-label">Wind</span>
+            <span class="hud-val" id="hudWind">-- km/h</span>
+          </div>
+          <div class="hud-row">
+            <span class="hud-label">Precip</span>
+            <span class="hud-val" id="hudPrecip">-- mm/h</span>
+          </div>
+          <div class="hud-coords" id="hudCoords">0.00°, 0.00°</div>
+        </div>
+      </div>
+
+      <!-- 5-Minute Stepped Timeline Player Controls -->
+      <div class="timeline-bar">
+        <button class="play-btn" id="radarPlayBtn" onclick="toggleRadarPlay()">❚❚</button>
+        <input type="range" class="timeline-slider" id="radarTimeSlider" min="0" max="0" value="0" oninput="onRadarSliderMove(this.value)" />
+        <span class="timestamp-label" id="radarTimeLabel">--:--</span>
+      </div>
+    </div>
+
+    <!-- Windy Map Iframe Integration -->
+    <div class="weather-card satellite-card">
+      <div class="satellite-header">
+        <div class="card-title" style="margin-bottom: 0;">
+          <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
+          <span>TEMPERATURE</span>
+        </div>
+        <a id="windyExternalLink" href="https://www.windy.com/?13.3671,103.8448,5" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">
+          Open in Windy ↗
+        </a>
+      </div>
+      <div class="satellite-map-wrapper" style="height: 340px;">
+        <iframe id="windyTempIframe" width="100%" height="100%" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=4&overlay=efiTemp&product=efi&level=surface&lat=13.367&lon=103.845&pressure=true&message=true" frameborder="0"></iframe>
+      </div>
+    </div>
+
+    <!-- Global Storm Tracker Widget Located Directly Below Mapping Section -->
+    <div class="weather-card">
+      <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+        <div class="widget-title">
+          <div class="card-title" style="margin-bottom: 2px;">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-10 10c0 4.9 3.5 8.9 8.2 9.8l.8.2v-6.2H9v-2h2V12a3 3 0 0 1 3-3h2v2h-2a1 1 0 0 0-1 1v1.8h3v2h-3V22c5.5-.5 9.8-5.1 9.8-10.7A10 10 0 0 0 12 2z"/></svg>
+            <span>GLOBAL STORM TRACKER & WIND ACCUMULATION MAP</span>
+          </div>
+          <p id="subtext" style="font-size: 0.75rem; color: var(--muted);">📍 Current Location Tracking Active</p>
+        </div>
+      </div>
+
+      <div class="storm-list" id="stormListContainer"></div>
+
+      <div class="map-wrapper">
+        <iframe id="stormWindyFrame" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=5&overlay=gustAccu&product=ecmwf&level=surface&lat=13.363&lon=103.856" title="Wind Accumulation Map" frameborder="0"></iframe>
+      </div>
+
+      <div class="footer-note">
+        Integrated with Windy.com interactive wind accumulation weather frame. Click any storm card to re-center the map coordinates dynamically.
+      </div>
+    </div>
+
+    <div class="grid-2col">
+      <div class="weather-card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="m11 15-7 0 10-14-3 9 7 0-10 14 3-9z"/></svg>
+          <span>SOLAR (600W)</span>
+        </div>
+        <div class="card-large-val" id="solar-current-w">-- W</div>
+        <div style="font-weight: 500; font-size: 0.9rem;" id="solar-badge">--% of 600W</div>
+        <div class="ios-progress-track" style="margin-top: 6px;">
+          <div class="ios-progress-fill" id="solar-bar" style="background: #facc15;"></div>
+        </div>
+        <div class="card-subtext card-subtext-muted" id="solar-est-daily" style="font-size: 0.7rem;">
+          Est. Today: ~-- Wh · GHI: -- W/m²
+        </div>
+      </div>
+
+      <div class="weather-card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M12 2.7l4.9 6.7A6 6 0 1 1 7.1 9.4L12 2.7z"/></svg>
+          <span>RAIN INTENSITY</span>
+        </div>
+        <div class="card-large-val" id="val-rain">-- mm/h</div>
+        <div class="card-subtext card-subtext-muted" id="rain-rate-sub">Real-time precipitation rate.</div>
+      </div>
+    </div>
+
+    <div class="grid-2col">
+      <div class="weather-card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/></svg>
+          <span>PRESSURE</span>
+        </div>
+        
+        <div class="pressure-gauge-box">
+          <svg class="pressure-dial-svg" viewBox="0 0 135 105">
+            <g id="pressureTicksGroup"></g>
+            <g transform="translate(67.5, 60)">
+              <text x="0" y="-12" fill="#ffffff" font-size="15" font-weight="700" text-anchor="middle" id="pressureTrendArrow">↓</text>
+              <text x="0" y="8" fill="#ffffff" font-size="19" font-weight="500" letter-spacing="-0.02em" text-anchor="middle" id="pressureMainVal">1,006</text>
+              <text x="0" y="24" fill="rgba(255,255,255,0.72)" font-size="10.5" font-weight="500" text-anchor="middle">hPa</text>
+            </g>
+          </svg>
+          <div class="pressure-ticks-label-row">
+            <span>Low</span>
+            <span>High</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="weather-card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5zm0 12.5c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+          <span>VISIBILITY</span>
+        </div>
+        <div class="card-large-val" id="val-visibility">-- km</div>
+        <div class="card-subtext card-subtext-muted" id="visibility-sub">Clear atmospheric conditions.</div>
+      </div>
+    </div>
+
+    <div class="weather-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M4 10h11a3 3 0 1 0-3-3 1 1 0 1 1-2 0 5 5 0 1 1 5 5H4a1 1 0 1 1 0-2zm0 4h14a3 3 0 1 1-3 3 1 1 0 1 0-2 0 5 5 0 1 0 5-5H4a1 1 0 0 0 0 2zm0 4h7a2 2 0 1 0-2-2 1 1 0 1 1-2 0 4 4 0 1 1 4 4H4a1 1 0 0 1 0-2z"/></svg>
+        <span>WIND</span>
+      </div>
+      <div class="wind-body">
+        <div class="wind-stats">
+          <div class="wind-row">
+            <span class="wind-label">Wind</span>
+            <span class="wind-value" id="val-wind">-- km/h</span>
+          </div>
+          <div class="wind-row">
+            <span class="wind-label">Gusts</span>
+            <span class="wind-value" id="val-gusts">-- km/h</span>
+          </div>
+          <div class="wind-row">
+            <span class="wind-label">Direction</span>
+            <span class="wind-value" id="wind-dir-text">--° --</span>
+          </div>
+        </div>
+
+        <div class="compass-container">
+          <svg class="compass-dial" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="2.5, 4" />
+            <circle cx="50" cy="50" r="37" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <text x="50" y="14" fill="rgba(255,255,255,0.85)" font-size="8.5" font-weight="700" text-anchor="middle">N</text>
+            <text x="90" y="53" fill="rgba(255,255,255,0.7)" font-size="8.5" font-weight="700" text-anchor="middle">E</text>
+            <text x="50" y="93" fill="rgba(255,255,255,0.7)" font-size="8.5" font-weight="700" text-anchor="middle">S</text>
+            <text x="10" y="53" fill="rgba(255,255,255,0.7)" font-size="8.5" font-weight="700" text-anchor="middle">W</text>
+            <text x="50" y="48" fill="#ffffff" font-size="13" font-weight="600" text-anchor="middle" id="compass-speed-num">--</text>
+            <text x="50" y="59" fill="rgba(255,255,255,0.65)" font-size="8" font-weight="500" text-anchor="middle">km/h</text>
+            <g id="compass-needle" class="compass-needle" style="transform: rotate(0deg);">
+              <circle cx="19" cy="50" r="3" fill="#ffffff" />
+              <line x1="19" y1="50" x2="80" y2="50" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+              <polygon points="82,50 76,46 78,50 76,54" fill="#ffffff" />
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2col">
+      <div class="weather-card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M19.4 15a4 4 0 0 0-3.9-3.2A6 6 0 0 0 4.1 13 4 4 0 0 0 5 21h14a4 4 0 0 0 .4-6z"/></svg>
+          <span>CLOUD COVER</span>
+        </div>
+        <div class="card-large-val" id="val-cloud">--%</div>
+        <div class="ios-progress-track">
+          <div class="ios-progress-fill" id="cloud-bar" style="background: #c084fc;"></div>
+        </div>
+        <div class="card-subtext card-subtext-muted" id="cloud-sub">Sky opacity overhead.</div>
+      </div>
+
+      <div class="weather-card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M12 2.7l4.9 6.7A6 6 0 1 1 7.1 9.4L12 2.7z"/></svg>
+          <span>DEW POINT</span>
+        </div>
+        <div class="card-large-val" id="val-dewpoint">--°C</div>
+        <div class="card-subtext card-subtext-muted" id="dewpoint-sub">Atmospheric saturation.</div>
+      </div>
+    </div>
+
+    <!-- Sun Transit Widget -->
+    <div class="weather-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 18a6 6 0 0 1-6-6h12a6 6 0 0 1-6 6zm-7-4H2v-2h3v2zm17 0h-3v-2h3v2zm-4.9-7.1 1.4-1.4 1.4 1.4-1.4 1.4-1.4-1.4zM5.5 8.3 4.1 6.9l1.4-1.4 1.4 1.4 1.4 1.4zM11 1h2v3h-2V1z"/></svg>
+        <span id="sunTransitHeaderTitle">SOLAR TRANSIT</span>
+      </div>
+
+      <div class="sun-status-desc" id="statusDesc">Tracking Solar Transit...</div>
+
+      <div class="sun-arc-container">
+        <svg class="sun-arc-svg" viewBox="0 0 320 150">
+          <defs>
+            <linearGradient id="arcStrokeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
+              <stop offset="50%" stop-color="#fbbf24" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.3"/>
+            </linearGradient>
+            <filter id="sunOrbGlow">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          <line x1="20" y1="125" x2="300" y2="125" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="3,3" />
+          <path d="M 25 125 Q 160 15 295 125" fill="none" stroke="url(#arcStrokeGrad)" stroke-width="2.5" stroke-linecap="round" />
+          <circle id="celestialOrb" class="celestial-orb" cx="25" cy="125" r="8.5" fill="#facc15" filter="url(#sunOrbGlow)" />
+        </svg>
+      </div>
+
+      <div class="sun-time-labels">
+        <div class="sun-time-block">
+          <span class="sun-time-tag" id="startTag">Sunrise</span>
+          <span class="sun-time-val" id="startTimeVal">--:--</span>
+        </div>
+        <div class="sun-time-block right">
+          <span class="sun-time-tag" id="endTag">Sunset</span>
+          <span class="sun-time-val" id="endTimeVal">--:--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lunar Phase Widget -->
+    <div class="weather-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/></svg>
+        <span>LUNAR PHASE & EPHEMERIS</span>
+      </div>
+
+      <div class="moon-visual">
+        <div class="canvas-wrapper">
+          <canvas id="moon-canvas" width="150" height="150"></canvas>
+        </div>
+        <div class="moon-phase-name" id="phase-name">Calculating...</div>
+        <div class="meta-badges">
+          <div class="badge badge-ill" id="illumination-val">--% Illuminated</div>
+          <div class="badge badge-sky" id="sky-status">--</div>
+        </div>
+      </div>
+
+      <div class="moon-details-grid">
+        <div class="moon-detail-card">
+          <div class="label">Moonrise Today</div>
+          <div class="value" id="moonrise-time">--:--</div>
+          <div class="subtext" id="moonrise-sub">Horizon</div>
+        </div>
+
+        <div class="moon-detail-card">
+          <div class="label">Moonset Today</div>
+          <div class="value" id="moonset-time">--:--</div>
+          <div class="subtext" id="moonset-sub">Horizon</div>
+        </div>
+
+        <div class="moon-detail-card">
+          <div class="label">Next Full Moon</div>
+          <div class="value" id="next-full-date">--</div>
+          <div class="subtext" id="full-days-away">--</div>
+        </div>
+
+        <div class="moon-detail-card">
+          <div class="label">Next New Moon</div>
+          <div class="value" id="next-new-date">--</div>
+          <div class="subtext" id="new-days-away">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIOCLIMATIC, VECTOR RISK & ALLERGENS -->
+    <div class="section-label">Bioclimatic, Vector & Allergen Telemetry</div>
+    <div class="weather-card" style="gap: 10px;">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        <span>BIOCLIMATIC INDICES</span>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🦟 Mosquito Breeding Risk</span>
+          <span class="metric-val" id="mosquitoVal">--</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="mosquitoBar" style="width: 0%; background: #facc15;"></div>
+        </div>
+        <div class="metric-sub" id="mosquitoSub">Evaluating vector conditions...</div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌡️ Humidex / Discomfort</span>
+          <span class="metric-val" id="humidexVal">--</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="humidexBar" style="width: 0%; background: #38bdf8;"></div>
+        </div>
+        <div class="metric-sub" id="humidexSub">Deriving vapor pressure load...</div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌾 Pollen & Allergen Index</span>
+          <span class="metric-val" id="pollenVal">Analyzing...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="pollenBar" style="width: 15%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="pollenSub">Evaluating airborne aeroallergens, grass pollen, and ragweed dispersion...</div>
+      </div>
+    </div>
+
+    <!-- GEOLOGICAL, MARINE & HYDROLOGICAL HAZARDS -->
+    <div class="section-label">Geological, Marine & Atmospheric Hazards</div>
+    <div class="weather-card" style="gap: 10px;">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
+        <span>EARLY WARNING TELEMETRY</span>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🔥 Fires in Area & Thermal Hotspots</span>
+          <span class="metric-val" id="fireVal">Analyzing...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="fireBar" style="width: 10%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="fireSub">
+          Scanning NASA FIRMS thermal anomaly buffers, vegetation flammability, and particulate smoke indicators...
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌋 Volcanic Plume Warning</span>
+          <span class="metric-val" id="volcanoVal">Calculating...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="volcanoBar" style="width: 15%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="volcanoSub">
+          Scanning nearest magmatic vents and aviation color alerts...
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">⚡ Tectonic Activity</span>
+          <span class="metric-val" id="quakeVal">Querying USGS...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="quakeBar" style="width: 10%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="quakeSub">Connecting live seismic sensors...</div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌊 Tsunami Alerts</span>
+          <span class="metric-val" id="tsunamiVal">Evaluating...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="tsunamiBar" style="width: 10%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="tsunamiSub">Evaluating oceanic hypocenters...</div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌊 Flood Stage & Water Basin Levels</span>
+          <span class="metric-val" id="floodStageVal">Normal Baseline</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="floodStageBar" style="width: 15%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="floodStageSub">
+          Analyzing regional catchment runoff, tributary saturation, and river basin cresting stages...
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌊 Flash & River Flood Risk</span>
+          <span class="metric-val" id="floodVal">Calculating...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="floodBar" style="width: 15%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="floodSub">
+          Evaluating catchment runoff, local precipitation rates, and floodplain saturation...
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">🌀 Tropical Systems / Typhoons</span>
+          <span class="metric-val" id="stormVal">Calculating...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="stormBar" style="width: 20%; background: var(--accent-blue);"></div>
+        </div>
+        <div class="metric-sub" id="stormSub">
+          Scanning barometric depression, wind shear velocities, and convective squall bands...
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-header">
+          <span class="metric-tag">⚡ Lightning Activity</span>
+          <span class="metric-val" id="lightningVal">0 / hr</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="lightningBar" style="width: 5%; background: var(--accent-green);"></div>
+        </div>
+        <div class="metric-sub" id="lightningSub">
+          Scanning convective cells and atmospheric instability (CAPE)...
+        </div>
+      </div>
+
+      <div class="asmc-card" id="asmcWidgetCard">
+        <div class="asmc-badge-row">
+          <span id="asmcLevelBadge" class="asmc-level-badge">Level 0: Stand Down</span>
+          <span id="asmcSeasonPhase" class="asmc-phase-text">Wet Season Monsoon</span>
+        </div>
+        <div id="asmcAlertTitle" class="asmc-title">Regional Transboundary Haze Advisory</div>
+        <div id="asmcAlertDesc" class="asmc-desc">
+          Evaluating seasonal fire weather, agricultural clearing patterns, and boundary layer atmospheric ventilation...
+        </div>
+
+        <div class="asmc-grid">
+          <div class="asmc-metric-item">
+            Prevailing Regime
+            <span class="asmc-metric-val" id="asmcRegimeVal">Southwest Monsoon</span>
+          </div>
+          <div class="asmc-metric-item">
+            Regional Ground PM2.5
+            <span class="asmc-metric-val" id="asmcGroundPmVal">Baseline (&lt; 25 µg/m³)</span>
+          </div>
+          <div class="asmc-metric-item">
+            Inversion Cap Ceiling
+            <span class="asmc-metric-val" id="asmcCapVal">Dispersed / Free Flow</span>
+          </div>
+          <div class="asmc-metric-item">
+            Mekong Basin Hotspots
+            <span class="asmc-metric-val" id="asmcHotspotVal">Suppressed / Low</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="ios-dock">
+    <div class="dock-icon" title="Reset to Current Location" onclick="goToCity(0)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20.5 3l-5.5 2-5-2-5.5 2v16l5.5-2 5 2 5.5-2V3zM15 18.2l-4-1.6V5.8l4 1.6v10.8z"/>
+      </svg>
+    </div>
+
+    <div class="dock-pagination" id="dockPagination"></div>
+
+    <div class="dock-icon" title="Manage / Add Cities" onclick="toggleCityModal(true)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M4 18h16v-2H4v2zm0-5h16v-2H4v2zm0-7v2h16V6H4z"/>
+      </svg>
+    </div>
+  </nav>
+
+  <!-- City Search Modal Sheet -->
+  <div class="modal-backdrop" id="modalBackdrop" onclick="handleBackdropClick(event)">
+    <div class="city-modal" id="cityModal">
+      <div class="modal-drag-bar"></div>
+      <div class="modal-header">
+        <span class="modal-title">Weather Cities</span>
+        <button class="modal-close-btn" onclick="toggleCityModal(false)">Done</button>
+      </div>
+
+      <div class="search-box-wrapper">
+        <svg class="search-icon-inside" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <input type="text" id="citySearchInput" class="search-input" placeholder="Search for a city..." oninput="handleCitySearch(this.value)" autocomplete="off" />
+      </div>
+
+      <div id="searchSection" style="display: none;">
+        <div class="search-tag">Search Results</div>
+        <ul class="search-results-list" id="searchResultsList"></ul>
+      </div>
+
+      <div class="search-tag" style="margin-top: 8px;">Saved Cities</div>
+      <ul class="saved-cities-list" id="savedCitiesList"></ul>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -52,6 +52,17 @@ let latestSo2 = "0.0";
 let hourlyPm10Map = {};
 let hourlySo2Map = {};
 
+// Satellite Map & Radar Animation State
+let mapLocationMarker = null;
+let baseRadarFrames = [];
+let radarTimelineSteps = [];
+let radarTileLayers = [];
+let currentRadarStepIndex = 0;
+let isRadarPlaying = true;
+let radarPlayInterval = null;
+let velocityWindLayer = null;
+let hudDebounceTimeout = null;
+
 const globalStorms = [
     { name: "Tropical Storm Norbert", basin: "Eastern Pacific", type: "Tropical Storm", winds: "85 km/h", movement: "W @ 16 km/h", lat: 19.4, lon: -145.2 },
     { name: "Post-Tropical Cyclone Lowell", basin: "Central Pacific", type: "Post-Tropical", winds: "80 km/h", movement: "W @ 18 km/h", lat: 29.0, lon: -169.9 },
@@ -1477,46 +1488,248 @@ function renderClimate3DIcon(weatherCode, rainMm) {
   }
 }
 
+// Format Zoom Earth Timestamp
+function formatZoomDate(unixSeconds) {
+  const d = new Date(unixSeconds * 1000);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())},${pad(d.getHours())}:${pad(d.getMinutes())},+7`;
+}
+
+function updateZoomEarthLink(unixSeconds) {
+  const active = getActiveCity();
+  const dateParam = unixSeconds ? `/date=${formatZoomDate(unixSeconds)}` : '';
+  const extLink = document.getElementById("zoomEarthExternalLink");
+  if (extLink) {
+    extLink.href = `https://zoom.earth/maps/satellite/#view=${active.lat.toFixed(4)},${active.lon.toFixed(4)},6z${dateParam}/overlays=radar,wind,temperatures`;
+  }
+}
+
+// 5-Minute Stepped Radar Loop Engine
+function showRadarStep(index) {
+  const step = radarTimelineSteps[index];
+  if (!step) return;
+
+  radarTileLayers.forEach(layer => layer.setOpacity(0));
+
+  if (radarTileLayers[step.layerIndex]) {
+    radarTileLayers[step.layerIndex].setOpacity(step.opacity);
+  }
+  if (step.blendIndex !== undefined && radarTileLayers[step.blendIndex]) {
+    radarTileLayers[step.blendIndex].setOpacity(step.opacity * 0.85);
+  }
+
+  const d = new Date(step.time * 1000);
+  const timeLabel = document.getElementById("radarTimeLabel");
+  const slider = document.getElementById("radarTimeSlider");
+  if (timeLabel) timeLabel.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  if (slider) slider.value = index;
+
+  updateZoomEarthLink(step.time);
+}
+
+function toggleRadarPlay() {
+  isRadarPlaying = !isRadarPlaying;
+  const playBtn = document.getElementById("radarPlayBtn");
+  if (playBtn) playBtn.textContent = isRadarPlaying ? "❚❚" : "▶";
+  if (isRadarPlaying) startRadarLoop();
+  else clearInterval(radarPlayInterval);
+}
+
+function startRadarLoop() {
+  clearInterval(radarPlayInterval);
+  radarPlayInterval = setInterval(() => {
+    if (radarTimelineSteps.length === 0) return;
+    currentRadarStepIndex = (currentRadarStepIndex + 1) % radarTimelineSteps.length;
+    showRadarStep(currentRadarStepIndex);
+  }, 450);
+}
+
+function onRadarSliderMove(val) {
+  currentRadarStepIndex = parseInt(val, 10);
+  showRadarStep(currentRadarStepIndex);
+  if (isRadarPlaying) {
+    clearInterval(radarPlayInterval);
+    startRadarLoop();
+  }
+}
+
 function initOrUpdateSatelliteMap(lat, lon) {
-  const zoomUrl = `https://zoom.earth/maps/satellite/#view=${lat},${lon},5z`;
-  document.getElementById("zoomEarthExternalLink").href = zoomUrl;
+  updateZoomEarthLink(radarTimelineSteps[currentRadarStepIndex] ? radarTimelineSteps[currentRadarStepIndex].time : null);
 
   if (!leafletMap) {
     leafletMap = L.map('satelliteMap', {
-      zoomControl: false,
+      zoomControl: true,
       attributionControl: false,
       minZoom: 3,
       maxZoom: 9
-    }).setView([lat, lon], 5);
+    }).setView([lat, lon], 6);
 
+    // Dedicated top pane for sharp thin labels
+    leafletMap.createPane('labelsPane');
+    leafletMap.getPane('labelsPane').classList.add('leaflet-labels-pane');
+
+    // 1. ArcGIS Satellite Basemap
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 9,
-      detectRetina: true
+      detectRetina: true,
+      zIndex: 1
     }).addTo(leafletMap);
 
-    fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json', {}, 2000)
+    // 2. City & Country Labels
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_only_labels/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 9,
+      pane: 'labelsPane'
+    }).addTo(leafletMap);
+
+    // 3. Current Location Pulse Marker
+    const locationIcon = L.divIcon({
+      className: 'loc-pulse-marker',
+      html: '<div class="loc-pulse-ring"></div><div class="loc-pulse-dot"></div>',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    });
+    mapLocationMarker = L.marker([lat, lon], { icon: locationIcon, zIndexOffset: 1000 }).addTo(leafletMap);
+
+    // 4. Wind Streamlines
+    fetchWithTimeout('https://raw.githubusercontent.com/danwild/leaflet-velocity/master/demo/wind-gfs.json', {}, 3000)
+      .then(res => res.json())
+      .then(windData => {
+        velocityWindLayer = L.velocityLayer({
+          displayValues: true,
+          displayOptions: {
+            velocityType: 'Global Wind',
+            position: 'bottomleft',
+            emptyString: 'No wind data',
+            angleConvention: 'bearingCW',
+            showCardinal: true,
+            speedUnit: 'k/h'
+          },
+          data: windData,
+          maxVelocity: 15,
+          velocityScale: 0.005,
+          particleAge: 90,
+          particleMultiplier: 1 / 300,
+          lineWidth: 1.5,
+          frameRate: 15,
+          colorScale: [
+            "rgba(255, 255, 255, 0.2)",
+            "rgba(56, 189, 248, 0.5)",
+            "rgba(34, 211, 238, 0.7)",
+            "rgba(52, 211, 153, 0.9)",
+            "rgba(251, 191, 36, 1)",
+            "rgba(244, 63, 94, 1)"
+          ]
+        }).addTo(leafletMap);
+      })
+      .catch(err => console.warn("Wind streamlines load skipped or failed:", err));
+
+    // 5. Radar Timeline Initial Load
+    fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json', {}, 2500)
       .then(res => res.json())
       .then(data => {
-        if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
-          const latestPath = data.radar.past[data.radar.past.length - 1].path;
-          L.tileLayer(`https://tilecache.rainviewer.com${latestPath}/256/{z}/{x}/{y}/2/1_1.png`, {
-            opacity: 0.75,
+        if (!data || !data.radar) return;
+        baseRadarFrames = [...(data.radar.past || []), ...(data.radar.nowcast || [])];
+        if (baseRadarFrames.length === 0) return;
+
+        radarTileLayers = baseRadarFrames.map(frame => {
+          return L.tileLayer(`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
+            opacity: 0,
             zIndex: 10
           }).addTo(leafletMap);
-        }
-      })
-      .catch(e => console.warn("RainViewer Radar fetch error / timeout:", e));
+        });
 
-    L.circleMarker([lat, lon], {
-      radius: 6,
-      color: '#ffffff',
-      fillColor: '#38bdf8',
-      fillOpacity: 1,
-      weight: 2
-    }).addTo(leafletMap);
+        radarTimelineSteps = [];
+        for (let i = 0; i < baseRadarFrames.length; i++) {
+          const currentFrame = baseFrames = baseRadarFrames[i];
+          const nextFrame = baseRadarFrames[i + 1];
+
+          radarTimelineSteps.push({
+            time: currentFrame.time,
+            layerIndex: i,
+            opacity: 0.68
+          });
+
+          if (nextFrame) {
+            const gapSeconds = nextFrame.time - currentFrame.time;
+            if (gapSeconds >= 480) {
+              radarTimelineSteps.push({
+                time: currentFrame.time + Math.round(gapSeconds / 2),
+                layerIndex: i,
+                blendIndex: i + 1,
+                opacity: 0.45
+              });
+            }
+          }
+        }
+
+        const slider = document.getElementById("radarTimeSlider");
+        if (slider) {
+          slider.max = radarTimelineSteps.length - 1;
+          slider.value = radarTimelineSteps.length - 1;
+        }
+        currentRadarStepIndex = radarTimelineSteps.length - 1;
+
+        showRadarStep(currentRadarStepIndex);
+        startRadarLoop();
+      })
+      .catch(err => console.warn("RainViewer timeline radar fetch failed:", err));
+
+    // 6. Dynamic Cursor Telemetry Info Box
+    const hudBox = document.getElementById('cursorInfoBox');
+    const hudTemp = document.getElementById('hudTemp');
+    const hudWind = document.getElementById('hudWind');
+    const hudPrecip = document.getElementById('hudPrecip');
+    const hudCoords = document.getElementById('hudCoords');
+    const mapWrapper = document.getElementById('mapWrapper');
+
+    leafletMap.on('mousemove', (e) => {
+      if (!hudBox || !mapWrapper) return;
+      hudBox.style.display = 'flex';
+
+      const rect = mapWrapper.getBoundingClientRect();
+      const x = e.containerPoint.x;
+      const y = e.containerPoint.y;
+
+      const offsetX = x + 150 > rect.width ? x - 135 : x + 14;
+      const offsetY = y + 90 > rect.height ? y - 80 : y + 14;
+
+      hudBox.style.left = `${offsetX}px`;
+      hudBox.style.top = `${offsetY}px`;
+
+      const hoverLat = e.latlng.lat;
+      const hoverLon = e.latlng.lng;
+      if (hudCoords) hudCoords.textContent = `${hoverLat.toFixed(2)}°, ${hoverLon.toFixed(2)}°`;
+
+      clearTimeout(hudDebounceTimeout);
+      hudDebounceTimeout = setTimeout(() => {
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${hoverLat.toFixed(2)}&longitude=${hoverLon.toFixed(2)}&current=temperature_2m,wind_speed_10m,precipitation&timezone=auto`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.current) {
+              if (hudTemp) hudTemp.textContent = `${Math.round(data.current.temperature_2m)}°C`;
+              if (hudWind) hudWind.textContent = `${Math.round(data.current.wind_speed_10m)} km/h`;
+              if (hudPrecip) hudPrecip.textContent = `${(data.current.precipitation || 0).toFixed(1)} mm/h`;
+            }
+          })
+          .catch(() => {
+            if (hudTemp) hudTemp.textContent = '--';
+            if (hudWind) hudWind.textContent = '--';
+            if (hudPrecip) hudPrecip.textContent = '--';
+          });
+      }, 350);
+    });
+
+    leafletMap.on('mouseout', () => {
+      if (hudBox) hudBox.style.display = 'none';
+      clearTimeout(hudDebounceTimeout);
+    });
 
   } else {
-    leafletMap.setView([lat, lon], 5);
+    leafletMap.setView([lat, lon], 6);
+    if (mapLocationMarker) {
+      mapLocationMarker.setLatLng([lat, lon]);
+    }
   }
 }
 
@@ -1987,7 +2200,6 @@ function checkRainAlert(weatherCode, curRain, nextRain, nextProb) {
   }
 }
 
-// Robust Xweather Phrases API integration: tries city+code, then city alone, then fallback coordinates
 async function loadXweatherSummaries(cityName, countryName, lat, lon) {
   const conditionsEl = document.getElementById("conditionsSummary");
   const forecastEl = document.getElementById("forecastSummary");
@@ -2010,8 +2222,6 @@ async function loadXweatherSummaries(cityName, countryName, lat, lon) {
   };
 
   const code = countryCodeMap[countryName] || "";
-  
-  // Create prioritized location candidates
   const candidates = [];
   if (code) candidates.push(`${cityName},${code}`);
   candidates.push(cityName);
@@ -2215,7 +2425,6 @@ async function loadWeatherData() {
   const active = getActiveCity();
   initOrUpdateSatelliteMap(active.lat, active.lon);
 
-  // Load Xweather Phrases Summaries with prioritized query fallbacks
   loadXweatherSummaries(active.name, active.country, active.lat, active.lon);
 
   const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${active.lat}&longitude=${active.lon}&models=ecmwf_ifs025&current=temperature_2m,relative_humidity_2m,apparent_temperature,rain,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,weather_code&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,rain,precipitation_probability,cloud_cover,surface_pressure,wind_speed_10m,wind_gusts_10m,uv_index,visibility,cape&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&timezone=auto&forecast_days=7`;
