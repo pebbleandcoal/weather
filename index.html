@@ -16,6 +16,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Leaflet Velocity (Wind Streamlines Engine) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-velocity/dist/leaflet-velocity.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-velocity/dist/leaflet-velocity.js"></script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
   
   <style>
@@ -923,6 +928,7 @@
     .r2 { left: 11px; bottom: -5px; animation-delay: 0.3s; }
     .r3 { left: 17px; animation-delay: 0.6s; }
 
+    /* --- SATELLITE & PRECIPITATION RADAR ENHANCEMENTS --- */
     .satellite-card { padding: 16px; overflow: hidden; }
     .satellite-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .satellite-link-btn {
@@ -933,18 +939,135 @@
       display: flex;
       align-items: center;
       gap: 4px;
+      transition: opacity 0.2s;
     }
+    .satellite-link-btn:hover { opacity: 0.8; }
     .satellite-map-wrapper {
       width: 100%;
-      height: 220px;
+      height: 320px;
       border-radius: 12px;
       overflow: hidden;
       position: relative;
       background: #111a28;
       z-index: 1;
       border: 1px solid var(--border);
+      cursor: crosshair;
     }
     #satelliteMap { width: 100%; height: 100%; }
+
+    .leaflet-labels-pane {
+      z-index: 650 !important;
+      opacity: 0.92;
+      filter: contrast(110%) brightness(105%) drop-shadow(0px 0px 0.5px rgba(0, 0, 0, 0.9));
+    }
+
+    .loc-pulse-marker {
+      position: relative;
+      width: 16px;
+      height: 16px;
+    }
+    .loc-pulse-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      background: #38bdf8;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+      z-index: 2;
+    }
+    .loc-pulse-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      background: rgba(56, 189, 248, 0.4);
+      border-radius: 50%;
+      animation: pulseAnim 2s infinite ease-out;
+      z-index: 1;
+    }
+    @keyframes pulseAnim {
+      0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+    }
+
+    .timeline-bar {
+      margin-top: 10px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .play-btn {
+      background: #38bdf8;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #090d16;
+      font-size: 0.75rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .timeline-slider {
+      flex: 1;
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+    .timestamp-label {
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: #ffffff;
+      min-width: 55px;
+      text-align: right;
+    }
+
+    .cursor-info-box {
+      position: absolute;
+      z-index: 1001;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      padding: 6px 8px;
+      min-width: 120px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 0.7rem;
+    }
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .hud-label { color: var(--muted); font-weight: 500; }
+    .hud-val { color: #ffffff; font-weight: 600; }
+    .hud-coords {
+      font-size: 0.62rem;
+      color: var(--accent);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 2px;
+      margin-top: 2px;
+      text-align: right;
+    }
+    /* ----------------------------------------------------- */
 
     .pressure-gauge-box {
       width: 100%;
@@ -1955,18 +2078,42 @@
     <!-- Mapping Section -->
     <div class="section-label">Atmospheric Telemetry & Celestial</div>
 
+    <!-- UPDATED SATELLITE & PRECIPITATION RADAR WIDGET -->
     <div class="weather-card satellite-card">
       <div class="satellite-header">
         <div class="card-title" style="margin-bottom: 0;">
           <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
           <span>SATELLITE & PRECIPITATION RADAR</span>
         </div>
-        <a id="zoomEarthExternalLink" href="https://zoom.earth/maps/satellite/#view=13.3671,103.8448,5z" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">
-          Open in Zoom.Earth ↗
-        </a>
+        <a id="zoomEarthExternalLink" href="https://zoom.earth/maps/satellite/#view=13.3671,103.8448,5z/overlays=radar,wind,temperatures" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">Open in Zoom.Earth ↗</a>
       </div>
-      <div class="satellite-map-wrapper">
+      
+      <div class="satellite-map-wrapper" id="mapWrapper">
         <div id="satelliteMap"></div>
+
+        <!-- Dynamic Hover Info Box -->
+        <div class="cursor-info-box" id="cursorInfoBox">
+          <div class="hud-row">
+            <span class="hud-label">Temp</span>
+            <span class="hud-val" id="hudTemp">--°C</span>
+          </div>
+          <div class="hud-row">
+            <span class="hud-label">Wind</span>
+            <span class="hud-val" id="hudWind">-- km/h</span>
+          </div>
+          <div class="hud-row">
+            <span class="hud-label">Precip</span>
+            <span class="hud-val" id="hudPrecip">-- mm/h</span>
+          </div>
+          <div class="hud-coords" id="hudCoords">0.00°, 0.00°</div>
+        </div>
+      </div>
+
+      <!-- 5-Minute Stepped Timeline Player Controls -->
+      <div class="timeline-bar">
+        <button class="play-btn" id="radarPlayBtn" onclick="toggleRadarPlay()">❚❚</button>
+        <input type="range" class="timeline-slider" id="radarTimeSlider" min="0" max="0" value="0" oninput="onRadarSliderMove(this.value)" />
+        <span class="timestamp-label" id="radarTimeLabel">--:--</span>
       </div>
     </div>
 
