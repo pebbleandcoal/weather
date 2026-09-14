@@ -1,7 +1,9 @@
 const API_KEY = "jO1pS3yOqaEaPL7KBOFghwmff66C6ehe";
 const iqAirKey = '57810971-c634-4d89-a7cb-4cf2ae9d2b2b';
+const XWEATHER_CLIENT_ID = "GbEsRskEOmMmQQSgKnkPZ";
+const XWEATHER_CLIENT_SECRET = "MntyE09HUSdwNQLpUOS3ROW6mJyIqnW76fDVjTiB";
 
-function fetchWithTimeout(url, options = {}, timeout = 2000) {
+function fetchWithTimeout(url, options = {}, timeout = 3000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   return fetch(url, { ...options, signal: controller.signal })
@@ -896,7 +898,7 @@ function updateAsmcHazeWidget(lat, lon, currentPm25, humidity, rainMm) {
       badge.style.color = "#000";
       badge.innerText = "Level 0: Stand Down";
     }
-    if (phase) phase.innerText = "Southwest Monsoon / Rain Season";
+    if (phase) phase.innerText = "Southwest Monsoon / Wet Season";
     if (title) title.innerText = "Mekong Basin Clean Air Baseline";
     if (desc) desc.innerText = "Southwest Monsoon active. Regional rainfall, atmospheric scrubbing, and buoyant convective mixing keep transboundary haze suppressed.";
     if (regime) regime.innerText = "Southwest Monsoon Flow";
@@ -1985,15 +1987,82 @@ function checkRainAlert(weatherCode, curRain, nextRain, nextProb) {
   }
 }
 
-function generateNextHourNarrative(curRain, nextRain, nextProb, nextTemp, curTemp, cloudCover, weatherCode) {
-  const isThunder = weatherCode === 8000 || [95, 96, 99].includes(weatherCode);
-  if (isThunder) return `Thunderstorm active nearby (${nextProb}% chance) with torrential rain.`;
-  if (curRain > 0 && nextRain > curRain) return `Precipitation intensifying to ~${nextRain.toFixed(1)} mm/h (${nextProb}% chance).`;
-  if (curRain > 0 && nextRain <= 0.1) return `Current rainfall tapering off over the next 60 minutes.`;
-  if (curRain === 0 && nextRain > 0.3) return `Rain starting within the hour (~${nextRain.toFixed(1)} mm/h, ${nextProb}% chance).`;
-  if (nextProb >= 40) return `Scattered convective showers possible nearby (${nextProb}% chance) under ${cloudCover}% clouds.`;
-  if (cloudCover > 70) return `Overcast skies persisting through the next hour with dry ground conditions.`;
-  return `Dry and stable conditions expected over the next hour with minimal rain risk.`;
+// Robust Xweather Phrases API integration: tries city+code, then city alone, then fallback coordinates
+async function loadXweatherSummaries(cityName, countryName, lat, lon) {
+  const conditionsEl = document.getElementById("conditionsSummary");
+  const forecastEl = document.getElementById("forecastSummary");
+
+  if (conditionsEl) conditionsEl.innerText = "Fetching current conditions summary...";
+  if (forecastEl) forecastEl.innerText = "Fetching forecast summary...";
+
+  const countryCodeMap = {
+    "Cambodia": "kh",
+    "Thailand": "th",
+    "Australia": "au",
+    "Vietnam": "vn",
+    "Singapore": "sg",
+    "Laos": "la",
+    "Malaysia": "my",
+    "Philippines": "ph",
+    "China": "cn",
+    "Japan": "jp",
+    "South Korea": "kr"
+  };
+
+  const code = countryCodeMap[countryName] || "";
+  
+  // Create prioritized location candidates
+  const candidates = [];
+  if (code) candidates.push(`${cityName},${code}`);
+  candidates.push(cityName);
+  if (lat !== undefined && lon !== undefined) candidates.push(`${lat},${lon}`);
+
+  let success = false;
+
+  for (const locQuery of candidates) {
+    const conditionsUrl = `https://phrases.api.xweather.com/conditions/${encodeURIComponent(locQuery)}?tone=casual&units=metric&text=long&client_id=${encodeURIComponent(XWEATHER_CLIENT_ID)}&client_secret=${encodeURIComponent(XWEATHER_CLIENT_SECRET)}`;
+    const forecastsUrl = `https://phrases.api.xweather.com/forecasts/${encodeURIComponent(locQuery)}?units=metric&text=long&client_id=${encodeURIComponent(XWEATHER_CLIENT_ID)}&client_secret=${encodeURIComponent(XWEATHER_CLIENT_SECRET)}`;
+
+    try {
+      const [condRes, foreRes] = await Promise.all([
+        fetchWithTimeout(conditionsUrl, {}, 3000),
+        fetchWithTimeout(forecastsUrl, {}, 3000)
+      ]);
+
+      if (condRes.ok) {
+        const condData = await condRes.json();
+        if (condData && condData.response) {
+          if (conditionsEl) {
+            conditionsEl.innerText = typeof condData.response === 'string' 
+              ? condData.response 
+              : JSON.stringify(condData.response);
+          }
+          success = true;
+        }
+      }
+
+      if (foreRes.ok) {
+        const foreData = await foreRes.json();
+        if (foreData && foreData.response) {
+          if (forecastEl) {
+            forecastEl.innerText = typeof foreData.response === 'string' 
+              ? foreData.response 
+              : JSON.stringify(foreData.response);
+          }
+          success = true;
+        }
+      }
+
+      if (success) break;
+    } catch (err) {
+      console.warn(`Xweather query attempt failed for candidate "${locQuery}":`, err);
+    }
+  }
+
+  if (!success) {
+    if (conditionsEl) conditionsEl.innerText = "Current conditions summary unavailable for this location.";
+    if (forecastEl) forecastEl.innerText = "Forecast summary unavailable for this location.";
+  }
 }
 
 function renderTodayHourlySegments() {
@@ -2146,6 +2215,9 @@ async function loadWeatherData() {
   const active = getActiveCity();
   initOrUpdateSatelliteMap(active.lat, active.lon);
 
+  // Load Xweather Phrases Summaries with prioritized query fallbacks
+  loadXweatherSummaries(active.name, active.country, active.lat, active.lon);
+
   const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${active.lat}&longitude=${active.lon}&models=ecmwf_ifs025&current=temperature_2m,relative_humidity_2m,apparent_temperature,rain,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,weather_code&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,rain,precipitation_probability,cloud_cover,surface_pressure,wind_speed_10m,wind_gusts_10m,uv_index,visibility,cape&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max&timezone=auto&forecast_days=7`;
   const tomorrowUrl = `https://api.tomorrow.io/v4/weather/forecast?location=${active.lat},${active.lon}&timesteps=1h,1d&units=metric&apikey=${API_KEY}`;
 
@@ -2164,8 +2236,6 @@ async function loadWeatherData() {
       data = await fallbackRes.json();
     } catch (fbErr) {
       console.warn("Weather endpoints timed out or failed:", fbErr);
-      const narrative = document.getElementById("narrative-text");
-      if (narrative) narrative.innerText = "Weather telemetry temporarily offline.";
       return;
     }
   }
@@ -2246,11 +2316,6 @@ function processTomorrowData(data) {
 
   checkRainAlert(cur.weatherCode, cur.rainIntensity || 0, nextHour.rainIntensity || 0, nextHour.precipitationProbability || 0);
 
-  document.getElementById("narrative-text").innerText = generateNextHourNarrative(
-    cur.rainIntensity || 0, nextHour.rainIntensity || 0, nextHour.precipitationProbability || 0,
-    nextHour.temperature, cur.temperature, cur.cloudCover || 0, cur.weatherCode
-  );
-
   let todayHigh = currentTemp + 2;
   let todayLow = currentTemp - 4;
   let todayPrecip = 0;
@@ -2260,7 +2325,6 @@ function processTomorrowData(data) {
     todayLow = Math.round(d0.temperatureMin);
     todayPrecip = d0.rainAccumulationSum || 0;
   }
-  document.getElementById("narrative-daily-text").innerText = `Anticipated high of ${todayHigh}° and low of ${todayLow}° today with ${weatherLabel.toLowerCase()}.`;
 
   const windKmh = (cur.windSpeed || 0) * 3.6;
 
@@ -2390,16 +2454,9 @@ function processOpenMeteoData(data) {
 
   checkRainAlert(cur.weather_code, cur.rain, hourly.rain[nextIdx] || 0, hourly.precipitation_probability[nextIdx] || 0);
 
-  document.getElementById("narrative-text").innerText = generateNextHourNarrative(
-    cur.rain, hourly.rain[nextIdx] || 0, hourly.precipitation_probability[nextIdx] || 0,
-    hourly.temperature_2m[nextIdx], cur.temperature_2m, cur.cloud_cover, cur.weather_code
-  );
-
   const max0 = Math.round(daily.temperature_2m_max[0]);
   const min0 = Math.round(daily.temperature_2m_min[0]);
   const todayTotalPrecip = daily.precipitation_sum ? daily.precipitation_sum[0] : (daily.rain_sum ? daily.rain_sum[0] : 0);
-  
-  document.getElementById("narrative-daily-text").innerText = `Anticipated high of ${max0}° and low of ${min0}° today with ${weatherLabel.toLowerCase()}.`;
 
   const windKmh = cur.wind_speed_10m || 0;
   const cape = hourly.cape ? Math.round(hourly.cape[startIdx] || 0) : currentCapeValue;
@@ -2718,7 +2775,7 @@ function renderActiveDailyChart() {
     datasets = [
       { type: "bar", label: "Daily Rain (mm)", data: cachedDaily.map(d => d.rainSum.toFixed(1)), backgroundColor: "rgba(56, 189, 248, 0.8)", borderRadius: 6, yAxisID: "y" }
     ];
-    scales.y = { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)", callback: v => `${v}mm` } };
+    scales.y = { beginAtZero: true, grid: { color: "rgba(255, 255, 255, 0.08)" }, ticks: { color: "rgba(255, 255, 255, 0.6)" } };
 
   } else if (currentDailyView === 'solar') {
     datasets = [

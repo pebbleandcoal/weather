@@ -301,23 +301,11 @@
       flex-shrink: 0;
     }
 
-    .card-large-val {
-      font-size: 2rem;
-      font-weight: 400;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      margin: 3px 0 2px 0;
-    }
-
     .card-subtext {
       font-size: 0.78rem;
       line-height: 1.35;
       color: var(--text);
       margin-top: auto;
-    }
-
-    .card-subtext-muted {
-      color: var(--muted);
     }
 
     .alert-card {
@@ -1455,15 +1443,15 @@
         <span>WEATHER SUMMARY</span>
       </div>
       
-      <div style="color: #38bdf8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; margin: 6px 0 3px 0;">NEXT HOUR OUTLOOK</div>
-      <div class="card-subtext" id="narrative-text" style="font-size: 0.9rem; font-weight: 500;">
+      <div style="color: #38bdf8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; margin: 6px 0 3px 0;">CURRENT CONDITIONS</div>
+      <div class="card-subtext" id="conditionsSummary" style="font-size: 0.9rem; font-weight: 500;">
         Connecting live atmospheric sensors...
       </div>
       
       <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0;">
       
-      <div style="color: #38bdf8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 3px 0;">24-HOUR OUTLOOK</div>
-      <div class="card-subtext" id="narrative-daily-text" style="font-size: 0.9rem; font-weight: 500;">
+      <div style="color: #38bdf8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; margin: 0 0 3px 0;">FORECAST SUMMARY (MULTI-DAY OUTLOOK)</div>
+      <div class="card-subtext" id="forecastSummary" style="font-size: 0.9rem; font-weight: 500;">
         Generating diurnal meteorological model...
       </div>
     </div>
@@ -1983,20 +1971,20 @@
     </div>
 
     <!-- Windy Map Iframe Integration -->
-<div class="weather-card satellite-card">
-  <div class="satellite-header">
-    <div class="card-title" style="margin-bottom: 0;">
-      <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
-      <span>TEMPERATURE</span>
+    <div class="weather-card satellite-card">
+      <div class="satellite-header">
+        <div class="card-title" style="margin-bottom: 0;">
+          <svg viewBox="0 0 24 24"><path d="M12.63 2c-.67 0-1.28.26-1.74.68-.48.44-.76 1.05-.76 1.69 0 1.29 1.05 2.34 2.34h1.76c.46 0 .89-.18 1.22-.51.32-.32.5-.75.5-1.21 0-1.29-1.05-2.34-2.34-2.34h-.98zM5 7c-1.3 0-2.36 1.05-2.36 2.34 0 1.29 1.05 2.34 2.34 2.34h13.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H5zM2 14c0 1.29 1.05 2.34 2.34 2.34h10.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H4.34C3.05 11.66 2 12.71 2 14zm3 5c0 1.29 1.05 2.34 2.34 2.34h5.98c1.3 0 2.36-1.05 2.36-2.34 0-1.29-1.05-2.34-2.34-2.34H7.34C6.05 16.66 5 17.71 5 19z"/></svg>
+          <span>TEMPERATURE</span>
+        </div>
+        <a id="windyExternalLink" href="https://www.windy.com/?13.3671,103.8448,5" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">
+          Open in Windy ↗
+        </a>
+      </div>
+      <div class="satellite-map-wrapper" style="height: 340px;">
+        <iframe id="windyTempIframe" width="100%" height="100%" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=4&overlay=efiTemp&product=efi&level=surface&lat=13.367&lon=103.845&pressure=true&message=true" frameborder="0"></iframe>
+      </div>
     </div>
-    <a id="windyExternalLink" href="https://www.windy.com/?13.3671,103.8448,5" target="_blank" rel="noopener noreferrer" class="satellite-link-btn">
-      Open in Windy ↗
-    </a>
-  </div>
-  <div class="satellite-map-wrapper" style="height: 340px;">
-    <iframe id="windyTempIframe" width="100%" height="100%" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=4&overlay=efiTemp&product=efi&level=surface&lat=13.367&lon=103.845&pressure=true&message=true" frameborder="0"></iframe>
-  </div>
-</div>
 
     <!-- Global Storm Tracker Widget Located Directly Below Mapping Section -->
     <div class="weather-card">
@@ -2010,9 +1998,7 @@
         </div>
       </div>
 
-      <div class="storm-list" id="stormListContainer">
-        <!-- Populated dynamically -->
-      </div>
+      <div class="storm-list" id="stormListContainer"></div>
 
       <div class="map-wrapper">
         <iframe id="stormWindyFrame" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=5&overlay=gustAccu&product=ecmwf&level=surface&lat=13.363&lon=103.856" title="Wind Accumulation Map" frameborder="0"></iframe>
