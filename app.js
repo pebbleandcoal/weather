@@ -848,6 +848,15 @@ function updateAsmcHazeWidget(lat, lon, currentPm25, humidity, rainMm) {
   const isMekongRegion = lat >= 8 && lat <= 26 && lon >= 92 && lon <= 110;
   const isDryBurningSeason = (month >= 1 && month <= 5);
 
+  // If outside the Mekong region, hide the widget completely
+  if (!isMekongRegion) {
+    card.style.display = "none";
+    return;
+  }
+
+  // Restore display when inside the Mekong region
+  card.style.display = "flex";
+
   const badge = document.getElementById("asmcLevelBadge");
   const phase = document.getElementById("asmcSeasonPhase");
   const title = document.getElementById("asmcAlertTitle");
@@ -856,23 +865,6 @@ function updateAsmcHazeWidget(lat, lon, currentPm25, humidity, rainMm) {
   const groundPm = document.getElementById("asmcGroundPmVal");
   const cap = document.getElementById("asmcCapVal");
   const hotspot = document.getElementById("asmcHotspotVal");
-
-  if (!isMekongRegion) {
-    card.classList.add("standdown");
-    if (badge) {
-      badge.style.background = "rgba(255,255,255,0.2)";
-      badge.style.color = "#ffffff";
-      badge.innerText = "Out of Region";
-    }
-    if (phase) phase.innerText = "Non-Mekong Geographic Zone";
-    if (title) title.innerText = "ASMC Mekong Regional Advisory Inactive";
-    if (desc) desc.innerText = "Active coordinates are outside the Northern Mekong Sub-Region (Cambodia, Thailand, Laos, Myanmar, Vietnam) monitored zone.";
-    if (regime) regime.innerText = "Local Gradient Circulation";
-    if (groundPm) groundPm.innerText = `${Math.round(currentPm25)} µg/m³`;
-    if (cap) cap.innerText = "Local Boundary Layer";
-    if (hotspot) hotspot.innerText = "Regional Telemetry Only";
-    return;
-  }
 
   if (isDryBurningSeason && (currentPm25 >= 75 || humidity < 50)) {
     card.classList.remove("standdown");
@@ -1564,25 +1556,21 @@ function initOrUpdateSatelliteMap(lat, lon) {
       maxZoom: 9
     }).setView([lat, lon], 6);
 
-    // Dedicated top pane for sharp thin labels
     leafletMap.createPane('labelsPane');
     leafletMap.getPane('labelsPane').classList.add('leaflet-labels-pane');
 
-    // 1. ArcGIS Satellite Basemap
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 9,
       detectRetina: true,
       zIndex: 1
     }).addTo(leafletMap);
 
-    // 2. City & Country Labels
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_only_labels/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 9,
       pane: 'labelsPane'
     }).addTo(leafletMap);
 
-    // 3. Current Location Pulse Marker
     const locationIcon = L.divIcon({
       className: 'loc-pulse-marker',
       html: '<div class="loc-pulse-ring"></div><div class="loc-pulse-dot"></div>',
@@ -1591,7 +1579,6 @@ function initOrUpdateSatelliteMap(lat, lon) {
     });
     mapLocationMarker = L.marker([lat, lon], { icon: locationIcon, zIndexOffset: 1000 }).addTo(leafletMap);
 
-    // 4. Wind Streamlines
     fetchWithTimeout('https://raw.githubusercontent.com/danwild/leaflet-velocity/master/demo/wind-gfs.json', {}, 3000)
       .then(res => res.json())
       .then(windData => {
@@ -1624,7 +1611,6 @@ function initOrUpdateSatelliteMap(lat, lon) {
       })
       .catch(err => console.warn("Wind streamlines load skipped or failed:", err));
 
-    // 5. Radar Timeline Initial Load
     fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json', {}, 2500)
       .then(res => res.json())
       .then(data => {
@@ -1641,7 +1627,7 @@ function initOrUpdateSatelliteMap(lat, lon) {
 
         radarTimelineSteps = [];
         for (let i = 0; i < baseRadarFrames.length; i++) {
-          const currentFrame = baseFrames = baseRadarFrames[i];
+          const currentFrame = baseRadarFrames[i];
           const nextFrame = baseRadarFrames[i + 1];
 
           radarTimelineSteps.push({
@@ -1675,7 +1661,6 @@ function initOrUpdateSatelliteMap(lat, lon) {
       })
       .catch(err => console.warn("RainViewer timeline radar fetch failed:", err));
 
-    // 6. Dynamic Cursor Telemetry Info Box
     const hudBox = document.getElementById('cursorInfoBox');
     const hudTemp = document.getElementById('hudTemp');
     const hudWind = document.getElementById('hudWind');
@@ -2200,12 +2185,63 @@ function checkRainAlert(weatherCode, curRain, nextRain, nextProb) {
   }
 }
 
-async function loadXweatherSummaries(cityName, countryName, lat, lon) {
-  const conditionsEl = document.getElementById("conditionsSummary");
-  const forecastEl = document.getElementById("forecastSummary");
+// Active abort controller to cancel in-flight streams when switching cities
+let activeXweatherController = null;
 
-  if (conditionsEl) conditionsEl.innerText = "Fetching current conditions summary...";
-  if (forecastEl) forecastEl.innerText = "Fetching forecast summary...";
+function parseXweatherError(errData) {
+  if (!errData) return "Unknown error";
+  if (typeof errData === 'string') return errData;
+  if (typeof errData.detail === 'string') return errData.detail;
+  if (Array.isArray(errData.detail)) {
+    return errData.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+  }
+  if (errData.error && typeof errData.error.description === 'string') {
+    return errData.error.description;
+  }
+  return JSON.stringify(errData);
+}
+
+async function streamXweatherIntoElement(url, targetElement, signal) {
+  const response = await fetch(url, { signal });
+
+  if (!response.ok) {
+    const errJson = await response.json().catch(() => null);
+    throw new Error(errJson ? parseXweatherError(errJson) : `HTTP ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let hasText = false;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    if (chunk) {
+      if (!hasText) {
+        targetElement.innerText = '';
+        hasText = true;
+      }
+      targetElement.innerText += chunk;
+    }
+  }
+
+  return hasText;
+}
+
+async function loadXweatherSummaries(cityName, countryName, lat, lon) {
+  if (activeXweatherController) {
+    activeXweatherController.abort();
+  }
+  activeXweatherController = new AbortController();
+  const signal = activeXweatherController.signal;
+
+  const alertsEl = document.getElementById("alertsSummary");
+  const conditionsEl = document.getElementById("conditionsSummary");
+
+  if (alertsEl) alertsEl.innerText = "Checking active meteorological alerts...";
+  if (conditionsEl) conditionsEl.innerText = "Latest weather update...."
 
   const countryCodeMap = {
     "Cambodia": "kh",
@@ -2225,53 +2261,46 @@ async function loadXweatherSummaries(cityName, countryName, lat, lon) {
   const candidates = [];
   if (code) candidates.push(`${cityName},${code}`);
   candidates.push(cityName);
-  if (lat !== undefined && lon !== undefined) candidates.push(`${lat},${lon}`);
+  if (lat !== undefined && lon !== undefined) candidates.push(`${lat.toFixed(4)},${lon.toFixed(4)}`);
 
   let success = false;
 
   for (const locQuery of candidates) {
-    const conditionsUrl = `https://phrases.api.xweather.com/conditions/${encodeURIComponent(locQuery)}?tone=casual&units=metric&text=long&client_id=${encodeURIComponent(XWEATHER_CLIENT_ID)}&client_secret=${encodeURIComponent(XWEATHER_CLIENT_SECRET)}`;
-    const forecastsUrl = `https://phrases.api.xweather.com/forecasts/${encodeURIComponent(locQuery)}?units=metric&text=long&client_id=${encodeURIComponent(XWEATHER_CLIENT_ID)}&client_secret=${encodeURIComponent(XWEATHER_CLIENT_SECRET)}`;
+    if (signal.aborted) return;
+
+    const alertsUrl = `https://phrases.api.xweather.com/alerts/${encodeURIComponent(locQuery)}?personality=meteorologist&stream=true&units=metric&client_id=${encodeURIComponent(XWEATHER_CLIENT_ID)}&client_secret=${encodeURIComponent(XWEATHER_CLIENT_SECRET)}`;
+    const conditionsUrl = `https://phrases.api.xweather.com/conditions/${encodeURIComponent(locQuery)}?personality=meteorologist&stream=true&units=metric&forecast=true&client_id=${encodeURIComponent(XWEATHER_CLIENT_ID)}&client_secret=${encodeURIComponent(XWEATHER_CLIENT_SECRET)}`;
 
     try {
-      const [condRes, foreRes] = await Promise.all([
-        fetchWithTimeout(conditionsUrl, {}, 3000),
-        fetchWithTimeout(forecastsUrl, {}, 3000)
-      ]);
-
-      if (condRes.ok) {
-        const condData = await condRes.json();
-        if (condData && condData.response) {
-          if (conditionsEl) {
-            conditionsEl.innerText = typeof condData.response === 'string' 
-              ? condData.response 
-              : JSON.stringify(condData.response);
+      // 1. Stream Alerts first
+      if (alertsEl) {
+        try {
+          const gotAlerts = await streamXweatherIntoElement(alertsUrl, alertsEl, signal);
+          if (!gotAlerts || !alertsEl.innerText.trim()) {
+            alertsEl.innerText = "No active severe weather watches, warnings, or advisories for this area.";
           }
-          success = true;
+        } catch (alertErr) {
+          if (signal.aborted) return;
+          alertsEl.innerText = "No active severe weather watches, warnings, or advisories for this area.";
         }
       }
 
-      if (foreRes.ok) {
-        const foreData = await foreRes.json();
-        if (foreData && foreData.response) {
-          if (forecastEl) {
-            forecastEl.innerText = typeof foreData.response === 'string' 
-              ? foreData.response 
-              : JSON.stringify(foreData.response);
-          }
-          success = true;
-        }
+      // 2. Stream Current Conditions & Forecast second
+      if (conditionsEl) {
+        await streamXweatherIntoElement(conditionsUrl, conditionsEl, signal);
       }
 
-      if (success) break;
+      success = true;
+      break;
     } catch (err) {
-      console.warn(`Xweather query attempt failed for candidate "${locQuery}":`, err);
+      if (signal.aborted) return;
+      console.warn(`Xweather meteorologist stream failed for "${locQuery}":`, err.message);
     }
   }
 
-  if (!success) {
-    if (conditionsEl) conditionsEl.innerText = "Current conditions summary unavailable for this location.";
-    if (forecastEl) forecastEl.innerText = "Forecast summary unavailable for this location.";
+  if (!success && !signal.aborted) {
+    if (alertsEl) alertsEl.innerText = "Weather alerts unavailable for this location.";
+    if (conditionsEl) conditionsEl.innerText = "Current conditions and forecast stream unavailable for this location.";
   }
 }
 
