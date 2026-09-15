@@ -52,7 +52,6 @@ let latestSo2 = "0.0";
 let hourlyPm10Map = {};
 let hourlySo2Map = {};
 
-// Satellite Map & Radar Animation State
 let mapLocationMarker = null;
 let baseRadarFrames = [];
 let radarTimelineSteps = [];
@@ -64,113 +63,113 @@ let velocityWindLayer = null;
 let hudDebounceTimeout = null;
 
 const globalStorms = [
-    { name: "Tropical Storm Norbert", basin: "Eastern Pacific", type: "Tropical Storm", winds: "85 km/h", movement: "W @ 16 km/h", lat: 19.4, lon: -145.2 },
-    { name: "Post-Tropical Cyclone Lowell", basin: "Central Pacific", type: "Post-Tropical", winds: "80 km/h", movement: "W @ 18 km/h", lat: 29.0, lon: -169.9 },
-    { name: "Invest 97E", basin: "Eastern Pacific", type: "Disturbance", winds: "40 km/h", movement: "N/A", lat: 16.3, lon: -114.5 }
+  { name: "Tropical Storm Norbert", basin: "Eastern Pacific", type: "Tropical Storm", winds: "85 km/h", movement: "W @ 16 km/h", lat: 19.4, lon: -145.2 },
+  { name: "Post-Tropical Cyclone Lowell", basin: "Central Pacific", type: "Post-Tropical", winds: "80 km/h", movement: "W @ 18 km/h", lat: 29.0, lon: -169.9 },
+  { name: "Invest 97E", basin: "Eastern Pacific", type: "Disturbance", winds: "40 km/h", movement: "N/A", lat: 16.3, lon: -114.5 }
 ];
 
 function calculateStormDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return Math.round(R * c);
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
 }
 
 function renderStormTrackerWidget(focusStorm = null) {
-    const container = document.getElementById('stormListContainer');
-    if (!container) return;
-    container.innerHTML = '';
+  const container = document.getElementById('stormListContainer');
+  if (!container) return;
+  container.innerHTML = '';
 
-    const active = getActiveCity();
-    const curLat = active.lat;
-    const curLon = active.lon;
+  const active = getActiveCity();
+  const curLat = active.lat;
+  const curLon = active.lon;
 
-    let targetLat = curLat;
-    let targetLon = curLon;
-    let targetZoom = 5;
+  let targetLat = curLat;
+  let targetLon = curLon;
+  let targetZoom = 5;
 
-    if (focusStorm) {
-        let lon1 = curLon;
-        let lon2 = focusStorm.lon;
-        
-        if (Math.abs(lon1 - lon2) > 180) {
-            if (lon1 < lon2) lon1 += 360;
-            else lon2 += 360;
-        }
+  if (focusStorm) {
+    let lon1 = curLon;
+    let lon2 = focusStorm.lon;
 
-        targetLat = (curLat + focusStorm.lat) / 2;
-        targetLon = (lon2 + lon1) / 2;
-        if (targetLon > 180) targetLon -= 360;
-        if (targetLon < -180) targetLon += 360;
-
-        const distanceSpan = calculateStormDistance(curLat, curLon, focusStorm.lat, focusStorm.lon);
-        
-        if (distanceSpan > 10000) targetZoom = 2;
-        else if (distanceSpan > 5000) targetZoom = 3;
-        else if (distanceSpan > 2000) targetZoom = 4;
-        else if (distanceSpan > 800) targetZoom = 5;
-        else targetZoom = 6;
+    if (Math.abs(lon1 - lon2) > 180) {
+      if (lon1 < lon2) lon1 += 360;
+      else lon2 += 360;
     }
 
-    globalStorms.forEach(storm => {
-        const distKm = calculateStormDistance(curLat, curLon, storm.lat, storm.lon);
-        
-        let effectColor = "var(--warning)";
-        let effectBg = "rgba(245, 158, 11, 0.05)";
-        let effectBorder = "var(--warning)";
-        let badgeClass = "";
-        let effectText = `Moderate distance; minimal direct interference with ${active.name}.`;
+    targetLat = (curLat + focusStorm.lat) / 2;
+    targetLon = (lon2 + lon1) / 2;
+    if (targetLon > 180) targetLon -= 360;
+    if (targetLon < -180) targetLon += 360;
 
-        if (distKm < 500) {
-            effectText = `High Alert: Direct proximity zone to ${active.name}!`;
-            effectColor = "var(--danger)";
-            effectBg = "rgba(239, 68, 68, 0.05)";
-            effectBorder = "var(--danger)";
-            badgeClass = "badge-danger";
-        } else if (distKm > 6000) {
-            effectText = `Distant system (${Math.round(distKm).toLocaleString()} km away).`;
-            effectColor = "var(--safe)";
-            effectBg = "rgba(16, 185, 129, 0.05)";
-            effectBorder = "var(--safe)";
-            badgeClass = "badge-safe";
-        }
+    const distanceSpan = calculateStormDistance(curLat, curLon, focusStorm.lat, focusStorm.lon);
 
-        const card = document.createElement('div');
-        card.className = 'storm-card';
-        card.innerHTML = `
-            <div class="storm-info-top">
-                <div class="storm-name-box">
-                    <span class="storm-name">${storm.name}</span>
-                    <span class="storm-basin">${storm.basin}</span>
-                </div>
-                <span class="strength-badge ${badgeClass}">${storm.type}</span>
-            </div>
-            <div class="storm-metrics">
-                <div>Max Winds: <strong>${storm.winds}</strong></div>
-                <div>Movement: <strong>${storm.movement}</strong></div>
-                <div>Distance: <strong>~${distKm.toLocaleString()} km</strong></div>
-            </div>
-            <div class="local-effect-note" style="color: ${effectColor}; background: ${effectBg}; border-left-color: ${effectBorder};">
-                <span>⚠️ ${effectText}</span>
-                <span class="click-hint">Center Map ↗</span>
-            </div>
-        `;
-        
-        card.addEventListener('click', () => {
-            renderStormTrackerWidget(storm);
-        });
+    if (distanceSpan > 10000) targetZoom = 2;
+    else if (distanceSpan > 5000) targetZoom = 3;
+    else if (distanceSpan > 2000) targetZoom = 4;
+    else if (distanceSpan > 800) targetZoom = 5;
+    else targetZoom = 6;
+  }
 
-        container.appendChild(card);
+  globalStorms.forEach(storm => {
+    const distKm = calculateStormDistance(curLat, curLon, storm.lat, storm.lon);
+
+    let effectColor = "var(--warning)";
+    let effectBg = "rgba(245, 158, 11, 0.05)";
+    let effectBorder = "var(--warning)";
+    let badgeClass = "";
+    let effectText = `Moderate distance; minimal direct interference with ${active.name}.`;
+
+    if (distKm < 500) {
+      effectText = `High Alert: Direct proximity zone to ${active.name}!`;
+      effectColor = "var(--danger)";
+      effectBg = "rgba(239, 68, 68, 0.05)";
+      effectBorder = "var(--danger)";
+      badgeClass = "badge-danger";
+    } else if (distKm > 6000) {
+      effectText = `Distant system (${Math.round(distKm).toLocaleString()} km away).`;
+      effectColor = "var(--safe)";
+      effectBg = "rgba(16, 185, 129, 0.05)";
+      effectBorder = "var(--safe)";
+      badgeClass = "badge-safe";
+    }
+
+    const card = document.createElement('div');
+    card.className = 'storm-card';
+    card.innerHTML = `
+      <div class="storm-info-top">
+        <div class="storm-name-box">
+          <span class="storm-name">${storm.name}</span>
+          <span class="storm-basin">${storm.basin}</span>
+        </div>
+        <span class="strength-badge ${badgeClass}">${storm.type}</span>
+      </div>
+      <div class="storm-metrics">
+        <div>Max Winds: <strong>${storm.winds}</strong></div>
+        <div>Movement: <strong>${storm.movement}</strong></div>
+        <div>Distance: <strong>~${distKm.toLocaleString()} km</strong></div>
+      </div>
+      <div class="local-effect-note" style="color: ${effectColor}; background: ${effectBg}; border-left-color: ${effectBorder};">
+        <span>⚠️ ${effectText}</span>
+        <span class="click-hint">Center Map ↗</span>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      renderStormTrackerWidget(storm);
     });
 
-    const iframe = document.getElementById('stormWindyFrame');
-    if (iframe) {
-        iframe.src = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=${targetZoom}&overlay=gustAccu&product=ecmwf&level=surface&lat=${targetLat.toFixed(3)}&lon=${targetLon.toFixed(3)}`;
-    }
+    container.appendChild(card);
+  });
+
+  const iframe = document.getElementById('stormWindyFrame');
+  if (iframe) {
+    iframe.src = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=${targetZoom}&overlay=gustAccu&product=ecmwf&level=surface&lat=${targetLat.toFixed(3)}&lon=${targetLon.toFixed(3)}`;
+  }
 }
 
 function showLoading(show) {
@@ -322,10 +321,10 @@ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c);
 }
 
@@ -848,13 +847,11 @@ function updateAsmcHazeWidget(lat, lon, currentPm25, humidity, rainMm) {
   const isMekongRegion = lat >= 8 && lat <= 26 && lon >= 92 && lon <= 110;
   const isDryBurningSeason = (month >= 1 && month <= 5);
 
-  // If outside the Mekong region, hide the widget completely
   if (!isMekongRegion) {
     card.style.display = "none";
     return;
   }
 
-  // Restore display when inside the Mekong region
   card.style.display = "flex";
 
   const badge = document.getElementById("asmcLevelBadge");
@@ -1326,7 +1323,7 @@ function updateMoonWidget() {
 function updateWindyWidget(lat, lon) {
   const iframe = document.getElementById("windyTempIframe");
   const externalLink = document.getElementById("windyExternalLink");
-  
+
   const roundedLat = Number(lat).toFixed(3);
   const roundedLon = Number(lon).toFixed(3);
 
@@ -1399,11 +1396,11 @@ async function updateIQAirWidget(lat, lon) {
       }
 
       let statusText = "Good";
-      if(aqi > 50) statusText = "Moderate";
-      if(aqi > 100) statusText = "Unhealthy (SG)";
-      if(aqi > 150) statusText = "Unhealthy";
-      if(aqi > 200) statusText = "Very Unhealthy";
-      if(aqi > 300) statusText = "Hazardous";
+      if (aqi > 50) statusText = "Moderate";
+      if (aqi > 100) statusText = "Unhealthy (SG)";
+      if (aqi > 150) statusText = "Unhealthy";
+      if (aqi > 200) statusText = "Very Unhealthy";
+      if (aqi > 300) statusText = "Hazardous";
 
       const color = getAqiColor(aqi);
       const dot = document.getElementById('dot-aqi');
@@ -1480,7 +1477,6 @@ function renderClimate3DIcon(weatherCode, rainMm) {
   }
 }
 
-// Format Zoom Earth Timestamp
 function formatZoomDate(unixSeconds) {
   const d = new Date(unixSeconds * 1000);
   const pad = n => String(n).padStart(2, '0');
@@ -1496,7 +1492,6 @@ function updateZoomEarthLink(unixSeconds) {
   }
 }
 
-// 5-Minute Stepped Radar Loop Engine
 function showRadarStep(index) {
   const step = radarTimelineSteps[index];
   if (!step) return;
@@ -2185,7 +2180,6 @@ function checkRainAlert(weatherCode, curRain, nextRain, nextProb) {
   }
 }
 
-// Active abort controller to cancel in-flight streams when switching cities
 let activeXweatherController = null;
 
 function parseXweatherError(errData) {
@@ -2241,7 +2235,7 @@ async function loadXweatherSummaries(cityName, countryName, lat, lon) {
   const conditionsEl = document.getElementById("conditionsSummary");
 
   if (alertsEl) alertsEl.innerText = "Checking active meteorological alerts...";
-  if (conditionsEl) conditionsEl.innerText = "Latest weather update...."
+  if (conditionsEl) conditionsEl.innerText = "Latest weather update....";
 
   const countryCodeMap = {
     "Cambodia": "kh",
@@ -2272,7 +2266,6 @@ async function loadXweatherSummaries(cityName, countryName, lat, lon) {
     const conditionsUrl = `https://phrases.api.xweather.com/conditions/${encodeURIComponent(locQuery)}?personality=meteorologist&stream=true&units=metric&forecast=true&client_id=${encodeURIComponent(XWEATHER_CLIENT_ID)}&client_secret=${encodeURIComponent(XWEATHER_CLIENT_SECRET)}`;
 
     try {
-      // 1. Stream Alerts first
       if (alertsEl) {
         try {
           const gotAlerts = await streamXweatherIntoElement(alertsUrl, alertsEl, signal);
@@ -2285,7 +2278,6 @@ async function loadXweatherSummaries(cityName, countryName, lat, lon) {
         }
       }
 
-      // 2. Stream Current Conditions & Forecast second
       if (conditionsEl) {
         await streamXweatherIntoElement(conditionsUrl, conditionsEl, signal);
       }
@@ -2377,7 +2369,7 @@ function renderThreeDayProjectionWidget() {
   for (let i = 0; i < 3; i++) {
     const d = cachedDaily[i + 1];
     const dateObj = new Date(d.time);
-    
+
     const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
     const dateStr = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     const dateKey = d.time.slice(0, 10);
@@ -3040,73 +3032,73 @@ function renderActiveDailyChart() {
 }
 
 async function fetchEarthquakes() {
-    const loadingEl = document.getElementById('eq-loading');
-    const errorEl = document.getElementById('eq-error');
+  const loadingEl = document.getElementById('eq-loading');
+  const errorEl = document.getElementById('eq-error');
 
-    try {
-        const response = await fetchWithTimeout('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson', {}, 2000);
-        if (!response.ok) throw new Error('Network response was not ok');
-        
-        const data = await response.json();
-        allEarthquakes = data.features;
+  try {
+    const response = await fetchWithTimeout('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson', {}, 2000);
+    if (!response.ok) throw new Error('Network response was not ok');
 
-        loadingEl.style.display = 'none';
-        document.getElementById('eq-update-time').textContent = `Updated: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const data = await response.json();
+    allEarthquakes = data.features;
 
-        filterAndRenderEq();
-    } catch (err) {
-        console.warn("USGS Earthquake fetch failed or timed out (2s):", err);
-        loadingEl.style.display = 'none';
-        errorEl.style.display = 'block';
-    }
+    loadingEl.style.display = 'none';
+    document.getElementById('eq-update-time').textContent = `Updated: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+    filterAndRenderEq();
+  } catch (err) {
+    console.warn("USGS Earthquake fetch failed or timed out (2s):", err);
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'block';
+  }
 }
 
 function filterAndRenderEq() {
-    const threshold = parseFloat(document.getElementById('mag-filter').value);
-    const noEqEl = document.getElementById('eq-no-data');
-    const listEl = document.getElementById('earthquake-list');
+  const threshold = parseFloat(document.getElementById('mag-filter').value);
+  const noEqEl = document.getElementById('eq-no-data');
+  const listEl = document.getElementById('earthquake-list');
 
-    const filtered = allEarthquakes.filter(eq => eq.properties.mag > threshold);
+  const filtered = allEarthquakes.filter(eq => eq.properties.mag > threshold);
 
-    if (filtered.length === 0) {
-        noEqEl.style.display = 'block';
-        listEl.style.display = 'none';
-        noEqEl.textContent = `No earthquakes > M${threshold} recorded today. 🎉`;
-        return;
-    }
+  if (filtered.length === 0) {
+    noEqEl.style.display = 'block';
+    listEl.style.display = 'none';
+    noEqEl.textContent = `No earthquakes > M${threshold} recorded today. 🎉`;
+    return;
+  }
 
-    noEqEl.style.display = 'none';
-    listEl.style.display = 'flex';
-    listEl.innerHTML = '';
+  noEqEl.style.display = 'none';
+  listEl.style.display = 'flex';
+  listEl.innerHTML = '';
 
-    filtered.forEach(eq => {
-        const props = eq.properties;
-        const time = new Date(props.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        let badgeColor = '#f97316';
-        if (props.mag >= 7.0) badgeColor = '#b91c1c';
-        else if (props.mag >= 6.5) badgeColor = '#ef4444';
-        else if (props.mag < 4.0) badgeColor = '#eab308';
+  filtered.forEach(eq => {
+    const props = eq.properties;
+    const time = new Date(props.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        const item = document.createElement('li');
-        item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;';
-        
-        item.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
-                <span style="background: ${badgeColor}; color: white; font-weight: bold; padding: 2px 6px; border-radius: 6px; font-size: 0.72rem; flex-shrink: 0;">
-                    M ${props.mag.toFixed(1)}
-                </span>
-                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    <div style="font-size: 0.8rem; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${props.place}">${props.place}</div>
-                    <div style="font-size: 0.65rem; color: var(--muted);">${time}</div>
-                </div>
-            </div>
-            <a href="${props.url}" target="_blank" style="font-size: 0.72rem; color: #38bdf8; text-decoration: none; font-weight: 500; flex-shrink: 0; margin-left: 8px;">
-                Details &rarr;
-            </a>
-        `;
-        listEl.appendChild(item);
-    });
+    let badgeColor = '#f97316';
+    if (props.mag >= 7.0) badgeColor = '#b91c1c';
+    else if (props.mag >= 6.5) badgeColor = '#ef4444';
+    else if (props.mag < 4.0) badgeColor = '#eab308';
+
+    const item = document.createElement('li');
+    item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;';
+
+    item.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+        <span style="background: ${badgeColor}; color: white; font-weight: bold; padding: 2px 6px; border-radius: 6px; font-size: 0.72rem; flex-shrink: 0;">
+          M ${props.mag.toFixed(1)}
+        </span>
+        <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${props.place}">${props.place}</div>
+          <div style="font-size: 0.65rem; color: var(--muted);">${time}</div>
+        </div>
+      </div>
+      <a href="${props.url}" target="_blank" style="font-size: 0.72rem; color: #38bdf8; text-decoration: none; font-weight: 500; flex-shrink: 0; margin-left: 8px;">
+        Details &rarr;
+      </a>
+    `;
+    listEl.appendChild(item);
+  });
 }
 
 function toggleCityModal(show) {
@@ -3182,7 +3174,7 @@ function handleCitySearch(query) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5000);
       const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanQuery)}&count=6&language=en&format=json`;
-      
+
       const res = await fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
       const data = await res.json();
       list.innerHTML = "";
